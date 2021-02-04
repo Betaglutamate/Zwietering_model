@@ -1,70 +1,76 @@
-import numpy
+from analysisFunctions import normalizePlate
 import pandas as pd
-import numpy as np
-import csv
+import matplotlib.pyplot as plt
+import scipy as sp
 
-from pandas.core.indexes.base import Index
+plate1Path ="Data/202009_M63GluCaa_Sucrose_37c/run1/20200929_sucrose_m63caaglu_30c.xlsx"
 
+plate1Normalized = normalizePlate(plate1Path)
 
-# so first we want to open and analyse a single file
+# calulate growth rates for all the columns
 
-inputDf = pd.read_excel(
-    "Data/202009_M63GluCaa_Sucrose_37c/run1/20200929_sucrose_m63caaglu_30c.xlsx")
+colList = plate1Normalized['OD'].columns.tolist()
 
-
-inputDfOd = inputDf[45:143].transpose()
-inputDfGfp = inputDf[146:244].transpose()
-
-
-# Now I want to set the Index as Time
-
-
-inputDfOd.reset_index(inplace=True, drop=True)
-inputDfGfp.reset_index(inplace=True, drop=True)
-
-colsToDrop = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 25,
- 26, 37, 38, 49, 50, 61, 62, 73, 74, 85, 86, 87,
- 88, 89, 90, 91, 92, 93, 94, 95, 96, 97]
+individualTimeSeries = []
+for column in colList[1:]:
+    individualColumn = plate1Normalized['OD'][['Time (min)']].join(plate1Normalized['OD'][[column]])
+    individualColumn['Sample'] = column
+    individualColumn = individualColumn.rename(columns={column: "value"}, errors="raise")
+    individualTimeSeries.append(individualColumn)
 
 
-inputDfOd.drop(inputDfOd.columns[colsToDrop], axis=1, inplace=True)
-inputDfGfp.drop(inputDfGfp.columns[colsToDrop], axis=1, inplace=True)
+OdLongDf = individualTimeSeries[0]
+
+for samples in individualTimeSeries[1:]:
+    OdLongDf = OdLongDf.append(samples)
+
+OdLongDf = OdLongDf.reset_index()
+
+# Plot out individual OD curves.
+
+# for label, df in OdLongDf.groupby("Sample"):
+#     df.plot(x = "Time (min)", y = "value", kind="scatter", title=label)
+
+#plot all the OD curves on one graph
+from itertools import cycle
+import matplotlib.colors as mcolors
+
+cycol = cycle(mcolors.TABLEAU_COLORS)
+
+fig, ax = plt.subplots(figsize=(8,6))
+for label, df in OdLongDf.groupby("Sample"):
+    df.plot(x = "Time (min)", y = "value", kind="scatter", ax=ax, label=label, c=next(cycol))
+plt.legend()
 
 
-#now drop the first row as it contains our headers and drop any NA from empty data
-inputDfOd = inputDfOd.drop(inputDfOd.index[0]).dropna()
-inputDfGfp = inputDfGfp.drop(inputDfGfp.index[0]).dropna()
+# Now create the grouping variable by mutating the column
+groupNames =[x[0:7] for x in OdLongDf['Sample']]
+OdLongDf['Group'] = groupNames
+
+#Plot all the single values
+fig, ax = plt.subplots(figsize=(8,6))
+for label, df in OdLongDf.groupby("Group"):
+    df.plot(x = "Time (min)", y = "value", kind="scatter", ax=ax, label=label, c=next(cycol))
+plt.legend()
 
 
+#rearrange df to get the mean values out and plot mean values for it
+test = OdLongDf.groupby(["Group", "Time (min)"]).mean()
+new = test.drop(["index"], axis=1).unstack().transpose().reset_index().drop(["level_0"], axis=1)
+groupList = set([x[0:7] for x in colList[1:]])
 
-# Now we need to name the columns correctly
-# Here I call the column names saved in a csv and create a list from them named colNames
-
-with open('Data/01_helper_data/platereaderLayout.csv', newline='') as f:
-    reader = csv.reader(f)
-    data = list(reader)
-
-colNames = data[0]
-
-inputDfOd.rename(columns=dict(zip(inputDfOd.columns, colNames)),  inplace=True)
-inputDfGfp.rename(columns=dict(zip(inputDfGfp.columns, colNames)),  inplace=True)
+fig, ax = plt.subplots(figsize=(8,6))
+for group in groupList:
+    new.plot(x='Time (min)', y=group, ax = ax)
 
 
-#now find the Time in minutes
-newTime = [round(x*(7.6),2) for x in range(0, len(inputDfOd))]
-inputDfOd["Time (min)"] = newTime
-inputDfGfp["Time (min)"] = newTime
+#Align the dataframe to a specific value
+newTime = new["Time (min)"].values
+allignedDF = []
 
-# now I want to subtract the average of the first row from all values in the dataframe
-# OdMeanBg = inputDfOd.loc[1][2:61].mean()
-# GfpMeanBg = inputDfGfp.loc[1][2:61].mean()
-
-# inputDfOd.loc[:, inputDfOd.columns != 'Time (min)'] = inputDfOd.loc[:, inputDfOd.columns != 'Time (min)']- OdMeanBg
-# inputDfGfp.loc[:, inputDfGfp.columns != 'Time (min)'] = inputDfGfp.loc[:, inputDfGfp.columns != 'Time (min)']- GfpMeanBg
-
-firstRowOd = inputDfOd.iloc[[0]].values[0]
-finalOd = inputDfOd.apply(lambda row: row - firstRowOd, axis=1)
-
-firstRowGfp = inputDfGfp.iloc[[0]].values[0]
-finalGfp = inputDfGfp.apply(lambda row: row - firstRowGfp, axis=1)
+for column in new.columns[1:]:
+    filteredNew = new.loc[new[column] >0.001]['MZ_0000'].reset_index()
+    filteredNew["Time"] = newTime[0:len(filteredNew)]
+    filteredNew.reset_index()
+    allignedDF.append(filteredNew)
 
