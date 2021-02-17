@@ -8,37 +8,37 @@ from scipy import stats
 
 
 
-def normalizePlate(pathToExcel):
+def normalize_plate(pathToExcel):
     """
     This function takes in the pathToExcel file and outputs the normalized GFP and OD values as a dict
     """
     # so first we want to open and analyse a single file
 
-    inputDf = pd.read_excel(pathToExcel)
+    input_df = pd.read_excel(pathToExcel)
 
 
-    inputDfOd = inputDf[45:143].transpose()
-    inputDfGfp = inputDf[146:244].transpose()
+    input_df_od = input_df[45:143].transpose()
+    input_df_gfp = input_df[146:244].transpose()
 
 
     # Now I want to set the Index as Time
 
 
-    inputDfOd.reset_index(inplace=True, drop=True)
-    inputDfGfp.reset_index(inplace=True, drop=True)
+    input_df_od.reset_index(inplace=True, drop=True)
+    input_df_gfp.reset_index(inplace=True, drop=True)
 
-    colsToDrop = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 25,
+    cols_to_drop = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 25,
     26, 37, 38, 49, 50, 61, 62, 73, 74, 85, 86, 87,
     88, 89, 90, 91, 92, 93, 94, 95, 96, 97]
 
 
-    inputDfOd.drop(inputDfOd.columns[colsToDrop], axis=1, inplace=True)
-    inputDfGfp.drop(inputDfGfp.columns[colsToDrop], axis=1, inplace=True)
+    input_df_od.drop(input_df_od.columns[cols_to_drop], axis=1, inplace=True)
+    input_df_gfp.drop(input_df_gfp.columns[cols_to_drop], axis=1, inplace=True)
 
 
     #now drop the first row as it contains our headers and drop any NA from empty data
-    inputDfOd = inputDfOd.drop(inputDfOd.index[0]).dropna()
-    inputDfGfp = inputDfGfp.drop(inputDfGfp.index[0]).dropna()
+    input_df_od = input_df_od.drop(input_df_od.index[0]).dropna()
+    input_df_gfp = input_df_gfp.drop(input_df_gfp.index[0]).dropna()
 
 
 
@@ -49,106 +49,88 @@ def normalizePlate(pathToExcel):
         reader = csv.reader(f)
         data = list(reader)
 
-    colNames = data[0]
+    col_names = data[0]
 
-    inputDfOd.rename(columns=dict(zip(inputDfOd.columns, colNames)),  inplace=True)
-    inputDfGfp.rename(columns=dict(zip(inputDfGfp.columns, colNames)),  inplace=True)
+    input_df_od.rename(columns=dict(zip(input_df_od.columns, col_names)),  inplace=True)
+    input_df_gfp.rename(columns=dict(zip(input_df_gfp.columns, col_names)),  inplace=True)
 
 
     #now find the Time in minutes
-    newTime = [round(x*(7.6),2) for x in range(0, len(inputDfOd))]
-    inputDfOd["Time (min)"] = newTime
-    inputDfGfp["Time (min)"] = newTime
+    new_time = [round(x*(7.6),2) for x in range(0, len(input_df_od))]
+    input_df_od["Time (min)"] = new_time
+    input_df_gfp["Time (min)"] = new_time
 
     # now I want to subtract the average of the first row from all values in the dataframe
-    # OdMeanBg = inputDfOd.loc[1][2:61].mean()
-    # GfpMeanBg = inputDfGfp.loc[1][2:61].mean()
 
-    # inputDfOd.loc[:, inputDfOd.columns != 'Time (min)'] = inputDfOd.loc[:, inputDfOd.columns != 'Time (min)']- OdMeanBg
-    # inputDfGfp.loc[:, inputDfGfp.columns != 'Time (min)'] = inputDfGfp.loc[:, inputDfGfp.columns != 'Time (min)']- GfpMeanBg
+    firstRowOd = input_df_od.iloc[[0]].values[0]
+    finalOd = input_df_od.apply(lambda row: row - firstRowOd, axis=1)
 
-    firstRowOd = inputDfOd.iloc[[0]].values[0]
-    finalOd = inputDfOd.apply(lambda row: row - firstRowOd, axis=1)
-
-    firstRowGfp = inputDfGfp.iloc[[0]].values[0]
-    finalGfp = inputDfGfp.apply(lambda row: row - firstRowGfp, axis=1)
+    firstRowGfp = input_df_gfp.iloc[[0]].values[0]
+    finalGfp = input_df_gfp.apply(lambda row: row - firstRowGfp, axis=1)
 
     return {"OD": finalOd, "GFP": finalGfp}
 
 
 
 
-def alignDf(splitDf, **kwargs):
+def align_df(split_df, **kwargs):
     """
     This function takes a single experiment and aligns it to > stDev*5
     or you can pass in a kw od = num to set alignment
     """
 
-    newTime = splitDf["Time"].values
-    allignedDF = []
-    sampleList = []
-
-
-    stDev =  np.std(splitDf['OD'].iloc[0:10])
-    OdFilterValue = stDev*5
+    new_time = split_df["Time"].values
+    st_dev =  np.std(split_df['OD'].iloc[0:10])
+    od_filter_value = st_dev*5
     if kwargs:
-        OdFilterValue = kwargs.get('od')
-    filteredNew = splitDf.loc[splitDf['OD'] > OdFilterValue].reset_index(drop = True)
-    filteredNew["Time"] = newTime[0:len(filteredNew)]
+        od_filter_value = kwargs.get('od')
+    filtered_new = split_df.loc[split_df['OD'] > od_filter_value].reset_index(drop = True)
+    filtered_new["Time"] = new_time[0:len(filtered_new)]
 
-    # filteredNew = filteredNew.drop("index", axis = 1)
-    return filteredNew
+    return filtered_new
 
-def generatePlots(longDf, directory):
+def generate_plots(long_df, directory):
     """
     This function takes in a long Df it should then output a graph for every
     group
     """
 
-    split = longDf.groupby('Group')    
-    splitDf = [split.get_group(x) for x in split.groups]
+    split = long_df.groupby('Group')    
+    split_df = [split.get_group(x) for x in split.groups]
 
-    for num, df in enumerate(splitDf):
-        groupPlot = (
+    for num, df in enumerate(split_df):
+        group_plot = (
             gg.ggplot(df)+
             gg.aes(x='Time', y='OD', color='variable')+
             gg.geom_point()+
             gg.ggtitle(df['Group'].values[0])
         )
         saveString = f"test{num}.png"
-        gg.ggsave(groupPlot, os.path.join(directory, saveString))
+        gg.ggsave(group_plot, os.path.join(directory, saveString))
 
 
-def calculateRegression(longDf):
+def calculate_regression(long_df):
     """
-    This function will take the longDf and calculate a rolling window
+    This function will take the long_df and calculate a rolling window
     fit for growth rate
     """
-    windowSize = 8
-    split = longDf.groupby('Group')    
-    splitDf = [split.get_group(x) for x in split.groups]
-    longDf = []
+    window_size = 8
+    split = long_df.groupby('variable')    
+    split_df = [split.get_group(x) for x in split.groups]
+    long_df = []
 
-    for df in splitDf:
+    for df in split_df:
         regress_list = []
         for length in range(len(df)):
             res = stats.linregress(
-                x = df['Time'].values[length:length+windowSize],
-                y = df['log(OD)'].values[length:length+windowSize]
+                x = df['Time'].values[length:length+window_size],
+                y = df['log(OD)'].values[length:length+window_size]
             )
             regress_list.append((res.slope*60))
         
         df['GrowthRate'] = regress_list
-        longDf.append(df)
+        long_df.append(df)
     
-    longDf = pd.concat(longDf)
-    return longDf
+    long_df = pd.concat(long_df)
+    return long_df
 
-
-
-
-
-
-# model = RollingOLS(endog =df['OD'].values , exog=df[['Time']],window=5)
-# rres = model.fit()
-# rres.params
