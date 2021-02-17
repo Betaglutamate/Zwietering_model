@@ -61,7 +61,7 @@ split = test.groupby('variable')
 split_df = [split.get_group(x) for x in split.groups]
 
 (
-    gg.ggplot(split_df[8][17:]) +
+    gg.ggplot(split_df[8][20:]) +
     gg.aes(x="Time", y= "GrowthRate") +
     gg.geom_point()
 
@@ -71,24 +71,30 @@ a = split_df[8]['GrowthRate'].values
 
 diff_length = []
 
-for num in range(len(a)-5):
-    val1 = a[num+2]
-    val2 = a[num]
-    val3 = a[num+1]
-    val4 = a[num+3]
+for num in range(len(a)-8):
+    val1 = a[num]
+    val2 = a[num+2]
+    val3 = a[num+3]
+    val4 = a[num+4]
     val5 = a[num+5]
+    val6 = a[num+6]
+    val7 = a[num+7]
+    val8 = a[num+8]
 
     dif1 = (val1-val2)**2
     dif2 = (val1-val3)**2
     dif3 = (val1-val4)**2
     dif4 = (val1-val5)**2
-    final_dif = dif1 + dif2 + dif3 + dif4
+    dif5 = (val1-val6)**2
+    dif6 = (val1-val7)**2
+    dif7 = (val1-val8)**2
+    final_dif = dif1 + dif2 + dif3 + dif4 + dif5 + dif6 + dif7
     diff_length.append(final_dif)
 
 diff_length = pd.DataFrame({"diff": diff_length})
 
 final = pd.concat([split_df[8],diff_length], axis=1)
-final.loc[final['diff'] < 0.001]
+final.loc[final['diff'] < 0.0005]
 
 
 (
