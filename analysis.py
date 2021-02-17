@@ -1,76 +1,90 @@
-from analysisFunctions import normalizePlate
+from analysisFunctions import normalizePlate, alignDf, generatePlots, calculateRegression
 import pandas as pd
-import matplotlib.pyplot as plt
-import scipy as sp
+import numpy as np
+from scipy import stats
 
-plate1Path ="Data/202009_M63GluCaa_Sucrose_37c/run1/20200929_sucrose_m63caaglu_30c.xlsx"
+filesToAnalyze = []
 
-plate1Normalized = normalizePlate(plate1Path)
+test = analyzePlate(filesToAnalyze[1])
 
-# calulate growth rates for all the columns
+import os
+for root, dirs, files in os.walk("Data"):
+    for filename in files:
+        if filename.endswith(".xlsx"):
+            filesToAnalyze.append({"root": root, "filename": filename})
 
-colList = plate1Normalized['OD'].columns.tolist()
+def analyzePlate(file):
 
-individualTimeSeries = []
-for column in colList[1:]:
-    individualColumn = plate1Normalized['OD'][['Time (min)']].join(plate1Normalized['OD'][[column]])
-    individualColumn['Sample'] = column
-    individualColumn = individualColumn.rename(columns={column: "value"}, errors="raise")
-    individualTimeSeries.append(individualColumn)
+    root = file['root']
+    filename = file['filename']
+
+    plate1Path = os.path.join(root, filename)
+    plate1Normalized = normalizePlate(plate1Path)
+
+    # Align the dataframe to a specific value for individual values
+
+    a = plate1Normalized['OD'].melt(id_vars="Time (min)")
+    a = a.rename(columns = dict(zip(a.columns, ["Time", "variable", "OD"])))
+
+    b = plate1Normalized['GFP'].melt(id_vars="Time (min)")
+    b = b.rename(columns = dict(zip(b.columns, ["Time", "variable", "GFP"])))
+
+    merged = a.merge(b)
+
+    #OK its in the long format now to align it to OD
+
+    split = merged.groupby('variable')    
+    splitDf = [split.get_group(x) for x in split.groups]
+
+    alignedDfLong = []
+
+    for df in splitDf:
+        alignedDf = alignDf(df)
+        alignedDfLong.append(alignedDf)
+
+    alignedDfLong = pd.concat(alignedDfLong)    
+    alignedDfLong['Group'] = alignedDfLong['variable'].apply(lambda x: x[0:7])
+    alignedDfLong['GFP/OD'] = alignedDfLong['GFP'] / alignedDfLong['OD']
+    alignedDfLong['log(OD)'] = np.log(alignedDfLong['OD'])
+
+    generatePlots(alignedDfLong, root)
+    alignedDfLong = calculateRegression(alignedDfLong)
+
+    return alignedDfLong
+
+import time
+
+def calculateRegression(df):
+    """
+    This function will take the longDf and calculate a rolling window
+    fit for growth rate
+    """
+    windowSize = 8
+
+    regress_list = []
+    for length in range(len(df)):
+        res = stats.linregress(
+            x = df['X'].values[length:length+windowSize],
+            y = df['Y'].values[length:length+windowSize]
+        )
+        regress_list.append((res.slope*60))
+    
+    df['regression'] = regress_list
+
+    return df
+
+start = time.time()
+
+x = np.random.random(10000)
+y = np.random.random(10000)
+test = pd.DataFrame({"X": x, "Y": y})
+calculateRegression(test)
+
+end = time.time()
+
+print(end-start)
 
 
-OdLongDf = individualTimeSeries[0]
-
-for samples in individualTimeSeries[1:]:
-    OdLongDf = OdLongDf.append(samples)
-
-OdLongDf = OdLongDf.reset_index()
-
-# Plot out individual OD curves.
-
-# for label, df in OdLongDf.groupby("Sample"):
-#     df.plot(x = "Time (min)", y = "value", kind="scatter", title=label)
-
-#plot all the OD curves on one graph
-from itertools import cycle
-import matplotlib.colors as mcolors
-
-cycol = cycle(mcolors.TABLEAU_COLORS)
-
-fig, ax = plt.subplots(figsize=(8,6))
-for label, df in OdLongDf.groupby("Sample"):
-    df.plot(x = "Time (min)", y = "value", kind="scatter", ax=ax, label=label, c=next(cycol))
-plt.legend()
 
 
-# Now create the grouping variable by mutating the column
-groupNames =[x[0:7] for x in OdLongDf['Sample']]
-OdLongDf['Group'] = groupNames
-
-#Plot all the single values
-fig, ax = plt.subplots(figsize=(8,6))
-for label, df in OdLongDf.groupby("Group"):
-    df.plot(x = "Time (min)", y = "value", kind="scatter", ax=ax, label=label, c=next(cycol))
-plt.legend()
-
-
-#rearrange df to get the mean values out and plot mean values for it
-test = OdLongDf.groupby(["Group", "Time (min)"]).mean()
-new = test.drop(["index"], axis=1).unstack().transpose().reset_index().drop(["level_0"], axis=1)
-groupList = set([x[0:7] for x in colList[1:]])
-
-fig, ax = plt.subplots(figsize=(8,6))
-for group in groupList:
-    new.plot(x='Time (min)', y=group, ax = ax)
-
-
-#Align the dataframe to a specific value
-newTime = new["Time (min)"].values
-allignedDF = []
-
-for column in new.columns[1:]:
-    filteredNew = new.loc[new[column] >0.001]['MZ_0000'].reset_index()
-    filteredNew["Time"] = newTime[0:len(filteredNew)]
-    filteredNew.reset_index()
-    allignedDF.append(filteredNew)
 
