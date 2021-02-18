@@ -15,6 +15,9 @@ for root, dirs, files in os.walk("Data"):
 
 test = hf.analyze_plate(files_to_analyze[0], plot = False)
 
+split = test.groupby('variable')    
+split_df = [split.get_group(x) for x in split.groups]
+
 
 max_growth = test.groupby('variable').apply(hf.calculate_max_growth_rate)    
 
@@ -33,16 +36,44 @@ testing = calculate_max_growth_rate(split_df[59])
 
 new_test = test.groupby('variable').apply(calculate_regression_growth_rate).reset_index(drop=True)
 
-split = new_test.groupby('variable')    
-split_df = [split.get_group(x) for x in split.groups]
+test_list = []
+for num, val in enumerate(testing.smoothed_GR.values[:-5]):
+    value1 = testing.smoothed_GR.values[num -4]
+    value2 = testing.smoothed_GR.values[num -3]
+    value3 = testing.smoothed_GR.values[num -2]
+    value4 = testing.smoothed_GR.values[num -1]
+    value5 = testing.smoothed_GR.values[num]
+    value6 = testing.smoothed_GR.values[num + 1]
+    value7 = testing.smoothed_GR.values[num + 2]
+    value8 = testing.smoothed_GR.values[num + 3]
+    value9 = testing.smoothed_GR.values[num + 4]
+
+    sum_squared = (
+        ((value5-value1)**2)*0.25 +
+        ((value5-value2)**2)*0.5 +
+        ((value5-value3)**2)*0.75 +
+        ((value5-value4)**2) +
+        ((value5-value6)**2) +
+        ((value5-value7)**2)*0.75 +
+        ((value5-value8)**2)*0.5 +
+        ((value5-value9)**2)*0.25
+    )
+    test_list.append(sum_squared)
+
+summed = pd.DataFrame({"sumsq": test_list})
+
+testing = testing.reset_index()
+
+testing = pd.concat([summed, testing], axis=1)
+
+final = np.diff(summed['sumsq'])
 
 
 (
     gg.ggplot(testing) +
-    gg.aes(x= "Time", y = "adjusted") +
+    gg.aes(x= "Time", y = "GrowthRate") +
     gg.geom_point()+
-    gg.xlim(0,1000)+
-    gg.ylim(0,0.5)
+    gg.xlim(0,1000)
 )
 
 #best so far bohmaN
