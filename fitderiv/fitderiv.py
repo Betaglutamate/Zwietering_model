@@ -214,7 +214,8 @@ class fitderiv:
                 else:
                     merrors= esterrs
         if not np.any(merrors):
-            print('Fitting measurement errors.')
+            pass
+            #print('Fitting measurement errors.')
         # display details of covariance functions
         try:
             if bd:
@@ -247,7 +248,7 @@ class fitderiv:
         g.findhyperparameters(noruns, exitearly= exitearly, optmethod= optmethod, linalgmax= linalgmax)
         # display results of fit
         if gui:
-            print('log(max likelihood)= %e' % (-g.nlml_opt))
+            #print('log(max likelihood)= %e' % (-g.nlml_opt))
             for el in g.hparamerr:
                 if el[1] == 'l':
                     print('Warning: hyperparameter ' + str(el[0]) + ' is at a lower bound.')
@@ -355,8 +356,8 @@ class fitderiv:
         statnames: a list of alternative names for the statistics
         showerrors: display estimated errors for statistics
         '''
-        print('\nCalculating statistics with ' + str(nosamples) + ' samples')
-        if showerrors: print('\t(displaying mean +/- standard deviation [standard error])\n')
+        #print('\nCalculating statistics with ' + str(nosamples) + ' samples')
+        #if showerrors: print('\t(displaying mean +/- standard deviation [standard error])\n')
         if statnames:
             self.stats= statnames
         else:
@@ -384,7 +385,7 @@ class fitderiv:
 
 
 
-    def printstats(self, errorfac= 1, showerrors= True, performprint= True):
+    def printstats(self, errorfac= 1, showerrors= True, performprint= False):
         '''
         Creates and prints a dictionary of the statistics of the data and its inferred time-derivative
 
@@ -408,6 +409,7 @@ class fitderiv:
                                                                  statd[s + ' stderr']))
                 else:
                     print('{:s}= {:6e}'.format(stname, statd[s]))
+        
         return statd
 
 
@@ -431,7 +433,7 @@ class fitderiv:
             ax.set_xticklabels(stats)
             plt.show(block= False)
         except AttributeError:
-            print(" Statistics have not been calculated.")
+            #print(" Statistics have not been calculated.")
 
 
     def plotfvsdf(self, ylabel= 'f', title= ''):
@@ -495,7 +497,7 @@ class fitderiv:
                 df.to_excel(fname, sheet_name= 'Sheet1', index= False)
             dfs.to_excel('.'.join(fname.split('.')[:-1]) + '_stats.xlsx', sheet_name= 'Sheet1', index= False)
         else:
-            print('!! File type is either not recognized or not specified. Cannot save as', fname)
+            #print('!! File type is either not recognized or not specified. Cannot save as', fname)
 
 
 #####
