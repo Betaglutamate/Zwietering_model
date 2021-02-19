@@ -185,6 +185,8 @@ class HelperFunctions:
 
     def calculate_max_growth_rate(df):
         df['smoothed_GR'] = df['GrowthRate'].rolling(8, win_type="barthann").mean()
+        df['smoothed_std'] = df['GrowthRate'].rolling(8, win_type="barthann").std()
+        df['adjusted'] =  df['smoothed_GR']/df['smoothed_std']
         run_length, run_index = HelperFunctions.longest_run(df['smoothed_GR'].values[0:100])
         max_growth_rate = np.mean(df['smoothed_GR'].values[run_index: run_index+run_length])
 
