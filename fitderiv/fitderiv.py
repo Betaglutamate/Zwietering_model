@@ -433,7 +433,7 @@ class fitderiv:
             ax.set_xticklabels(stats)
             plt.show(block= False)
         except AttributeError:
-            #print(" Statistics have not been calculated.")
+            print(" Statistics have not been calculated.")
 
 
     def plotfvsdf(self, ylabel= 'f', title= ''):
@@ -497,9 +497,10 @@ class fitderiv:
                 df.to_excel(fname, sheet_name= 'Sheet1', index= False)
             dfs.to_excel('.'.join(fname.split('.')[:-1]) + '_stats.xlsx', sheet_name= 'Sheet1', index= False)
         else:
-            #print('!! File type is either not recognized or not specified. Cannot save as', fname)
+            print('!! File type is either not recognized or not specified. Cannot save as', fname)
 
 
 #####
 
-if __name__ == '__main__': print(fitderiv.__doc__)
+if __name__ == '__main__': 
+    print(fitderiv.__doc__)
