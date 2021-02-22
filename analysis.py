@@ -3,6 +3,8 @@ import analysisFunctions as af
 from fitderiv import fitderiv as fd
 import sys
 import plotnine as gg
+import numpy as np
+import seaborn as sns
 
 files_to_analyze = []
 
@@ -31,27 +33,51 @@ newdf['mass'][(newdf['Group'] == "MZ_0000") | (newdf['Group'] == "WT_0000")] =  
 
 newdf.plot(x="Time", y="mass", kind = "scatter")
 
-five_colours = ['blue', 'red', 'green', 'yellow', 'orange']*4
-unique_variables = newdf['variable'].unique()
+ax  = sns.relplot(x="Time", y = "mass", edgecolor = 'none', hue="Group", s=1, data=newdf)
+ax.set(xlabel='Time (h)', ylabel='weight (mg)', title='')
 
-colourdict = dict(zip(unique_variables, five_colours))
-newdf['colour'] = np.nan
+import matplotlib.pyplot as plt
+
+ax.savefig("weight.png")
+
+fig, ax = plt.subplots(2,2)
+
+sns.scatterplot(x="Time", y = "mass", ax =ax[0][0], edgecolor = 'none', hue="Group", s=1, data=newdf)
+ax[0][0].set(xlabel='Time (h)', ylabel='weight (mg)', title='')
+ax[0][0].get_legend().remove()
+
+plt.tight_layout()
+
+handles, labels = ax[0][0].get_legend_handles_labels()
+fig.legend(handles= handles, labels =labels,
+           loc=[0.8, 0.4],   # Position of legend
+           borderaxespad=0.1)
+
+plt.subplots_adjust(right=0.75)
 
 
-newdf['colour'] = newdf.apply(lambda x: colourdict.get(x.variable), axis=1)
-
-a =(
-    gg.ggplot(newdf) +
-    gg.aes(x = "Time", y = "mass", color = "Group")+
-    gg.ylab("mass (g)")
-    gg.geom_point()
-)
-
-gg.ggsave(a, "mass.png")
+ax.savefig("weight.png")
 
 
-newdf.plot(x = "Time", y = "mass", kind = "scatter", c="colour")
 
+# five_colours = ['blue', 'red', 'green', 'yellow', 'orange']*4
+# unique_variables = newdf['variable'].unique()
+
+# colourdict = dict(zip(unique_variables, five_colours))
+# newdf['colour'] = np.nan
+
+
+# newdf['colour'] = newdf.apply(lambda x: colourdict.get(x.variable), axis=1)
+
+
+import seaborn as sns
+
+
+import matplotlib.pyplot as plt
+
+g = sns.FacetGrid(newdf, col="Group")
+g.map(sns.relplot(x="Time", y = "mass", edgecolor = 'none', hue="Group", s=1, data=newdf))
+g.add_legend()
 
 i = 0
 for gr, df in zip(GR_list, split_df):
