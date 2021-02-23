@@ -52,7 +52,7 @@ def align_df(split_df, **kwargs):
 
     new_time = split_df["Time"].values
     st_dev = np.std(split_df['OD'].iloc[0:10])
-    od_filter_value = st_dev*5
+    od_filter_value = st_dev*10
     if kwargs:
         od_filter_value = kwargs.get('od')
     filtered_new = split_df.loc[split_df['OD'] >
@@ -86,13 +86,18 @@ def calculate_regression_long(long_df):
 
 
 def calculate_max_growth_rate(df):
-    df = df[df['OD'] > 0.02]
     split = df.groupby('variable')
     split_df = [split.get_group(x) for x in split.groups]
     max_growth_rate_list = []
 
-    for df in split_df:
-        max_growth_rate = max(df['GrowthRate'])
+    for temp_df in split_df:
+        new_df = temp_df[temp_df['OD'] > 0.00]
+        if new_df.empty:
+            max_growth_rate = 0
+        else:
+            max_growth_rate = max(new_df['GrowthRate'])
+
+
         max_growth_rate_list.append(max_growth_rate)
 
     return max_growth_rate_list
@@ -107,14 +112,14 @@ def generate_plots(long_df, directory):
     split = long_df.groupby('Group')
     split_df = [split.get_group(x) for x in split.groups]
 
-    for num, df in enumerate(split_df):
+    for df in split_df:
         group_plot = (
             gg.ggplot(df) +
             gg.aes(x='Time', y='OD', color='variable') +
             gg.geom_point() +
             gg.ggtitle(df['Group'].values[0])
         )
-        save_string = f"test{num}.png"
+        save_string = f"{df['Group'].values[0]}.png"
         gg.ggsave(group_plot, os.path.join(directory, save_string))
 
 

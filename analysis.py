@@ -1,10 +1,8 @@
 import os
-import analysisFunctions as af
-from fitderiv import fitderiv as fd
-import sys
+import fnmatch as fn
 import plotnine as gg
-import numpy as np
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 files_to_analyze = []
 
@@ -14,49 +12,55 @@ for root, dirs, files in os.walk("Data"):
             files_to_analyze.append({"root": root, "filename": filename})
 
 
-test = af.analyze_plate(files_to_analyze[4], plot=False)
-
-GR_list = af.calculate_max_growth_rate(test)
-
-split = test.groupby('variable')
-split_df = [split.get_group(x) for x in split.groups]
 
 
-test.loc[(test['Group'] == "MZ_0800") | (test['Group'] == "WT_0800")]
-idx = np.where((test['Group'] == "MZ_0800") | (test['Group'] == "WT_0800") | (test['Group'] == "MZ_0000") | (test['Group'] == "WT_0000"))
-
-newdf = test.loc[idx]
-newdf['mass'] = np.nan
-
-newdf['mass'][(newdf['Group'] == "MZ_0800") | (newdf['Group'] == "WT_0800")] =  newdf['OD'][(newdf['Group'] == "MZ_0800") | (newdf['Group'] == "WT_0800")].apply(lambda x: x*0.978)
-newdf['mass'][(newdf['Group'] == "MZ_0000") | (newdf['Group'] == "WT_0000")] =  newdf['OD'][(newdf['Group'] == "MZ_0000") | (newdf['Group'] == "WT_0000")].apply(lambda x: x*0.4)
-
-newdf.plot(x="Time", y="mass", kind = "scatter")
-
-ax  = sns.relplot(x="Time", y = "mass", edgecolor = 'none', hue="Group", s=1, data=newdf)
-ax.set(xlabel='Time (h)', ylabel='weight (mg)', title='')
-
-import matplotlib.pyplot as plt
-
-ax.savefig("weight.png")
-
-fig, ax = plt.subplots(2,2)
-
-sns.scatterplot(x="Time", y = "mass", ax =ax[0][0], edgecolor = 'none', hue="Group", s=1, data=newdf)
-ax[0][0].set(xlabel='Time (h)', ylabel='weight (mg)', title='')
-ax[0][0].get_legend().remove()
-
-plt.tight_layout()
-
-handles, labels = ax[0][0].get_legend_handles_labels()
-fig.legend(handles= handles, labels =labels,
-           loc=[0.8, 0.4],   # Position of legend
-           borderaxespad=0.1)
-
-plt.subplots_adjust(right=0.75)
+# for num, file in enumerate(files_to_analyze[0:7]):
+#     print(file)
+#     if fn.fnmatch(file['root'].lower(), '*nacl*'):
+#         temp_df = af.analyze_plate(files_to_analyze[num], plot=True)
+#         GR_list = af.calculate_max_growth_rate(temp_df)
 
 
-ax.savefig("weight.png")
+#         split = temp_df.groupby('variable')
+#         split_df = [split.get_group(x) for x in split.groups]
+
+#         i=0
+
+#         for gr, df in zip(GR_list, split_df):
+
+#             i = i+1
+
+#             x = sns.scatterplot(data = df, x = 'Time', y= "GrowthRate", hue="variable", edgecolor = 'none')
+#             x.set(xlabel='Time (h)', ylabel='Growth Rate u-1', title=file['root'] + file['filename'])
+#             x.axhline(gr, ls='--')
+
+#             savestring = os.path.join(file['root'], str(i))
+
+#             x.figure.savefig(savestring)
+#             plt.clf()
+
+
+
+
+### make multiplot
+
+#fig, ax = plt.subplots(2,2)
+
+# sns.scatterplot(x="Time", y = "mass", ax =ax[0][0], edgecolor = 'none', hue="Group", s=1, data=newdf)
+# ax[0][0].set(xlabel='Time (h)', ylabel='weight (mg)', title='')
+# ax[0][0].get_legend().remove()
+
+# plt.tight_layout()
+
+# handles, labels = ax[0][0].get_legend_handles_labels()
+# fig.legend(handles= handles, labels =labels,
+#            loc=[0.8, 0.4],   # Position of legend
+#            borderaxespad=0.1)
+
+# plt.subplots_adjust(right=0.75)
+
+
+# ax.savefig("weight.png")
 
 
 
@@ -70,32 +74,51 @@ ax.savefig("weight.png")
 # newdf['colour'] = newdf.apply(lambda x: colourdict.get(x.variable), axis=1)
 
 
-import seaborn as sns
+# import seaborn as sns
 
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
-g = sns.FacetGrid(newdf, col="Group")
-g.map(sns.relplot(x="Time", y = "mass", edgecolor = 'none', hue="Group", s=1, data=newdf))
-g.add_legend()
+# g = sns.FacetGrid(newdf, col="Group")
+# g.map(sns.relplot(x="Time", y = "mass", edgecolor = 'none', hue="Group", s=1, data=newdf))
+# g.add_legend()
 
-i = 0
-for gr, df in zip(GR_list, split_df):
+# i = 0
+# for gr, df in zip(GR_list, split_df):
 
-    i = i+1
+#     i = i+1
 
-    tempPlot = (
-    gg.ggplot(df) +
-    gg.aes(x= "Time", y = "GrowthRate") +
-    gg.geom_point()+
-    gg.geom_hline(yintercept = gr)
-    )
+#     tempPlot = (
+#     gg.ggplot(df) +
+#     gg.aes(x= "Time", y = "GrowthRate") +
+#     gg.geom_point()+
+#     gg.geom_hline(yintercept = gr)
+#     )
 
-    savestring = f"test{i}.png"
+#     savestring = f"test{i}.png"
 
-    gg.ggsave(tempPlot, savestring)
+#     gg.ggsave(tempPlot, savestring)
 
 
+
+
+# test.loc[(test['Group'] == "MZ_0800") | (test['Group'] == "WT_0800")]
+# idx = np.where((test['Group'] == "MZ_0800") | (test['Group'] == "WT_0800") | (test['Group'] == "MZ_0000") | (test['Group'] == "WT_0000"))
+
+# newdf = test.loc[idx]
+# newdf['mass'] = np.nan
+
+# newdf['mass'][(newdf['Group'] == "MZ_0800") | (newdf['Group'] == "WT_0800")] =  newdf['OD'][(newdf['Group'] == "MZ_0800") | (newdf['Group'] == "WT_0800")].apply(lambda x: x*0.978)
+# newdf['mass'][(newdf['Group'] == "MZ_0000") | (newdf['Group'] == "WT_0000")] =  newdf['OD'][(newdf['Group'] == "MZ_0000") | (newdf['Group'] == "WT_0000")].apply(lambda x: x*0.4)
+
+# newdf.plot(x="Time", y="mass", kind = "scatter")
+
+# ax  = sns.relplot(x="Time", y = "mass", edgecolor = 'none', hue="Group", s=1, data=newdf)
+# ax.set(xlabel='Time (h)', ylabel='weight (mg)', title='')
+
+# import matplotlib.pyplot as plt
+
+# ax.savefig("weight.png")
 
 # testing = split_df[59].reset_index(drop=True)
 
