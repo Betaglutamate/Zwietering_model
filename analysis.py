@@ -1,4 +1,5 @@
 import os
+import model
 import fnmatch as fn
 import plotnine as gg
 import seaborn as sns
@@ -11,6 +12,7 @@ for root, dirs, files in os.walk("Data"):
         if filename.endswith(".xlsx"):
             files_to_analyze.append({"root": root, "filename": filename})
 
+model.Plate()
 
 
 
