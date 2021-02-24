@@ -12,8 +12,23 @@ for root, dirs, files in os.walk("Data"):
         if filename.endswith(".xlsx"):
             files_to_analyze.append({"root": root, "filename": filename})
 
-model.Plate()
+Experiment1 = model.Experiment('M63_Glu_CAA',
+            osmolyte='Sucrose',
+            temperature='30',
+            date='2020-10-09',
+            folder='Data/202009_M63GluCaa_Sucrose_37c'
+            )
 
+Experiment1.clean_data()
+
+Experiment2 = model.Experiment('M63_Glu_CAA',
+            osmolyte='Sucrose',
+            temperature='37',
+            date='2020-07-30',
+            folder='Data/20200730_m63gluCAA_sucrose'
+            )
+
+Experiment2.clean_data()
 
 
 # for num, file in enumerate(files_to_analyze[0:7]):
@@ -42,9 +57,7 @@ model.Plate()
 #             plt.clf()
 
 
-
-
-### make multiplot
+# make multiplot
 
 #fig, ax = plt.subplots(2,2)
 
@@ -63,7 +76,6 @@ model.Plate()
 
 
 # ax.savefig("weight.png")
-
 
 
 # five_colours = ['blue', 'red', 'green', 'yellow', 'orange']*4
@@ -100,8 +112,6 @@ model.Plate()
 #     savestring = f"test{i}.png"
 
 #     gg.ggsave(tempPlot, savestring)
-
-
 
 
 # test.loc[(test['Group'] == "MZ_0800") | (test['Group'] == "WT_0800")]

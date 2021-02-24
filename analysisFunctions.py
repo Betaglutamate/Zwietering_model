@@ -6,14 +6,10 @@ import plotnine as gg
 from scipy import stats
 
 
-def analyze_plate(file, **kwargs):
-    keywords = kwargs
+def analyze_plate(filepath):
 
-    root = file['root']
-    filename = file['filename']
 
-    plate_path = os.path.join(root, filename)
-    plate_normalized = normalize_plate(plate_path)
+    plate_normalized = normalize_plate(filepath)
 
     # Align the dataframe to a specific value for individual values
 
@@ -35,9 +31,10 @@ def analyze_plate(file, **kwargs):
     aligned_df_long['GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['OD']
     aligned_df_long['log(OD)'] = np.log(aligned_df_long['OD'])
 
-    if keywords.get('plot'):
-        print("generating plots")
-        generate_plots(aligned_df_long, root)
+    # if keywords.get('plot'):
+    #     print("generating plots")
+    #     root = os.path.split(filepath)[-1]
+    #     generate_plots(aligned_df_long, root)
 
     aligned_df_long = calculate_regression(aligned_df_long)
 
@@ -91,7 +88,7 @@ def calculate_max_growth_rate(df):
     max_growth_rate_list = []
 
     for temp_df in split_df:
-        new_df = temp_df[temp_df['OD'] > 0.00]
+        new_df = temp_df[temp_df['OD'] > 0.02]
         if new_df.empty:
             max_growth_rate = 0
         else:
@@ -102,25 +99,6 @@ def calculate_max_growth_rate(df):
 
     return max_growth_rate_list
 
-
-def generate_plots(long_df, directory):
-    """
-    This function takes in a long Df it should then output a graph for every
-    group
-    """
-
-    split = long_df.groupby('Group')
-    split_df = [split.get_group(x) for x in split.groups]
-
-    for df in split_df:
-        group_plot = (
-            gg.ggplot(df) +
-            gg.aes(x='Time', y='OD', color='variable') +
-            gg.geom_point() +
-            gg.ggtitle(df['Group'].values[0])
-        )
-        save_string = f"{df['Group'].values[0]}.png"
-        gg.ggsave(group_plot, os.path.join(directory, save_string))
 
 
 def normalize_plate(path_to_excel):
