@@ -12,14 +12,18 @@ for root, dirs, files in os.walk("Data"):
         if filename.endswith(".xlsx"):
             files_to_analyze.append({"root": root, "filename": filename})
 
-Experiment1 = model.Experiment('M63_Glu_CAA',
+experiment1 = model.Experiment('M63_Glu_CAA',
             osmolyte='Sucrose',
             temperature='30',
             date='2020-10-09',
             folder='Data/202009_M63GluCaa_Sucrose_37c'
             )
 
-Experiment1.clean_data()
+experiment1.clean_data()
+experiment1.list_of_repeats[0].subtract_wt()
+
+
+experiment1.list_of_repeats[0].generate_plots()
 
 Experiment2 = model.Experiment('M63_Glu_CAA',
             osmolyte='Sucrose',

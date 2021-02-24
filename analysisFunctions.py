@@ -82,25 +82,6 @@ def calculate_regression_long(long_df):
     return long_df
 
 
-def calculate_max_growth_rate(df):
-    split = df.groupby('variable')
-    split_df = [split.get_group(x) for x in split.groups]
-    max_growth_rate_list = []
-
-    for temp_df in split_df:
-        new_df = temp_df[temp_df['OD'] > 0.02]
-        if new_df.empty:
-            max_growth_rate = 0
-        else:
-            max_growth_rate = max(new_df['GrowthRate'])
-
-
-        max_growth_rate_list.append(max_growth_rate)
-
-    return max_growth_rate_list
-
-
-
 def normalize_plate(path_to_excel):
     """
     This function takes in the path_to_excel file and outputs the normalized GFP and OD values as a dict
