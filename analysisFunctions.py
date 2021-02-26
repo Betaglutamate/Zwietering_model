@@ -60,26 +60,37 @@ def align_df(split_df, **kwargs):
 
 
 def calculate_regression(df, window_size=8):
-    regress_list = []
-    for length in range(len(df)):
-        res = stats.linregress(
-            x=df['Time'].values[length:length+window_size],
-            y=df['log(OD)'].values[length:length+window_size]
-        )
-        regress_list.append((res.slope))
 
-    df['GrowthRate'] = regress_list
-    return df
+    split = df.groupby('variable')
+    split_df = [split.get_group(x) for x in split.groups]
+
+    reconstructed_df = []
+
+    for df in split_df:
+        regress_list = []
+        for length in range(len(df)):
+            res = stats.linregress(
+                x=df['Time'].values[length:length+window_size],
+                y=df['log(OD)'].values[length:length+window_size]
+            )
+            regress_list.append((res.slope))
+
+        df['GrowthRate'] = regress_list
+        reconstructed_df.append(df)
+    
+    growth_rate_calculated_df = pd.concat(reconstructed_df).reset_index(drop=True)
+
+    return growth_rate_calculated_df
 
 
-def calculate_regression_long(long_df):
-    """
-    This function will take the long_df and calculate a rolling window
-    fit for growth rate
-    """
-    long_df = long_df.groupby('variable').apply(
-        calculate_regression).reset_index(drop=True)
-    return long_df
+# def calculate_regression_long(long_df):
+#     """
+#     This function will take the long_df and calculate a rolling window
+#     fit for growth rate
+#     """
+#     long_df = long_df.groupby('variable').apply(
+#         calculate_regression).reset_index(drop=True)
+#     return long_df
 
 
 def normalize_plate(path_to_excel):

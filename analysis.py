@@ -12,25 +12,32 @@ for root, dirs, files in os.walk("Data"):
         if filename.endswith(".xlsx"):
             files_to_analyze.append({"root": root, "filename": filename})
 
-experiment1 = model.Experiment('M63_Glu_CAA',
-            osmolyte='Sucrose',
-            temperature='30',
-            date='2020-10-09',
-            folder='Data/202009_M63GluCaa_Sucrose_37c'
-            )
-
+experiment1 = model.Experiment(media = 'M63_Glu_CAA',
+                               osmolyte = 'Sucrose',
+                               temperature = '30',
+                               date = '2020-10-09',
+                               folder = 'Data/202009_M63GluCaa_Sucrose_37c'
+                               )
 experiment1.clean_data()
-experiment1.list_of_repeats[0].subtract_wt()
+experiment1.list_of_repeats[0].plot_growth_rate()
+
+
 
 
 experiment1.list_of_repeats[0].generate_plots()
+test = experiment1.list_of_repeats[0].normalized_df
+
+new_test = test[test['OD'] > 0.02]
+
+new_test[new_test['variable'] == "MZ_0800_1"].plot(x = 'Time', y ='normalised_GFP/OD', kind = 'scatter')
+
 
 Experiment2 = model.Experiment('M63_Glu_CAA',
-            osmolyte='Sucrose',
-            temperature='37',
-            date='2020-07-30',
-            folder='Data/20200730_m63gluCAA_sucrose'
-            )
+                               osmolyte='Sucrose',
+                               temperature='37',
+                               date='2020-07-30',
+                               folder='Data/20200730_m63gluCAA_sucrose'
+                               )
 
 Experiment2.clean_data()
 
