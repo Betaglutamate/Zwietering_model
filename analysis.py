@@ -1,45 +1,37 @@
-import os
 import model
-import fnmatch as fn
-import plotnine as gg
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-files_to_analyze = []
-
-for root, dirs, files in os.walk("Data"):
-    for filename in files:
-        if filename.endswith(".xlsx"):
-            files_to_analyze.append({"root": root, "filename": filename})
-
-experiment1 = model.Experiment(media = 'M63_Glu_CAA',
-                               osmolyte = 'Sucrose',
-                               temperature = '30',
-                               date = '2020-10-09',
-                               folder = 'Data/202009_M63GluCaa_Sucrose_37c'
-                               )
-experiment1.clean_data()
-experiment1.list_of_repeats[0].plot_growth_rate()
 
 
+#
+experiment1 = model.Experiment(media='M63_Glu_CAA',
+                               osmolyte='Sucrose',
+                               temperature='30',
+                               date='2020-10-09',
+                               folder='Data/202009_M63GluCaa_Sucrose_37c',
+                               plot=True)
 
 
-experiment1.list_of_repeats[0].generate_plots()
-test = experiment1.list_of_repeats[0].normalized_df
-
-new_test = test[test['OD'] > 0.02]
-
-new_test[new_test['variable'] == "MZ_0800_1"].plot(x = 'Time', y ='normalised_GFP/OD', kind = 'scatter')
-
-
-Experiment2 = model.Experiment('M63_Glu_CAA',
+experiment2 = model.Experiment(media='M63_Glu_CAA',
                                osmolyte='Sucrose',
                                temperature='37',
                                date='2020-07-30',
                                folder='Data/20200730_m63gluCAA_sucrose'
                                )
 
-Experiment2.clean_data()
+
+experiment3 = model.Experiment(media='M63_Glu',
+                               osmolyte='NaCl',
+                               temperature='37',
+                               date='2021-02-28',
+                               folder='Data/20210216_m63Glu_NaCl',
+                               plot=False)
+
+
+#files_to_analyze = []
+
+# for root, dirs, files in os.walk("Data"):
+#     for filename in files:
+#         if filename.endswith(".xlsx"):
+#             files_to_analyze.append({"root": root, "filename": filename})
 
 
 # for num, file in enumerate(files_to_analyze[0:7]):

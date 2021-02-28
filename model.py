@@ -8,12 +8,19 @@ import numpy as np
 
 class Experiment:
 
-    def __init__(self, media, osmolyte, temperature, date, folder):
+    def __init__(self, media, osmolyte, temperature, date, folder, plot=False):
         self.name = media
         self.osmolyte = osmolyte
         self.temperature = temperature
         self.date = date
-        self.folder = folder
+        self.folder = folder        
+        self.clean_data()
+        self.combine_all_repeats()
+
+        if plot == True:
+            self.generate_plots()
+
+
 
     def clean_data(self):
         files_to_analyze = []
@@ -32,14 +39,34 @@ class Experiment:
                                self.date, self.folder, f"repeat_{num}", analyzed_plate)
             temp_plate.calculate_max_growth_rate()
             temp_plate.subtract_wt()
+            temp_plate.calculate_GFP_by_phase()
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
 
+    def generate_plots(self):
+        for repeat in self.list_of_repeats:
+            repeat.generate_plots()
+            repeat.plot_growth_rate()
+    
+    def combine_all_repeats(self):
+        all_dfs = []
+        for repeat in self.list_of_repeats:
+            repeat_name = repeat.repeat_number
+            repeat.complete_df['repeat'] = repeat_name
+            all_dfs.append(repeat.complete_df)
 
-class Plate(Experiment):
+        self.experiment_df = pd.concat(all_dfs).reset_index(drop=True)
+
+
+class Plate():
 
     def __init__(self, media, osmolyte, temperature, date, folder, repeat_number, data):
-        super().__init__(media, osmolyte, temperature, date, folder)
+
+        self.name = media
+        self.osmolyte = osmolyte
+        self.temperature = temperature
+        self.date = date
+        self.folder = folder
         self.repeat_number = repeat_number
         self.data = data
 
@@ -98,6 +125,7 @@ class Plate(Experiment):
     def calculate_max_growth_rate(self):
 
         filter_OD = 0.02
+        length_exponential_phase = 8
 
         split = self.data.groupby('variable')
         split_df = [split.get_group(x) for x in split.groups]
@@ -116,9 +144,17 @@ class Plate(Experiment):
                 start_stationary_phase = np.nan
             else:
                 max_growth_rate = {'GrowthRate': new_df['GrowthRate'].max(), 'index_GrowthRate': new_df['GrowthRate'].idxmax()}
-                end_exponential_phase = {'end_exponential': new_df['Time'][(
-                    max_growth_rate['index_GrowthRate'] + 8)], 'index_end_exponential': (
-                    max_growth_rate['index_GrowthRate'] + 8)}
+                
+                if max_growth_rate['index_GrowthRate']+length_exponential_phase < len(new_df):
+                    end_exponential_phase = {'end_exponential': new_df['Time'][(
+                    max_growth_rate['index_GrowthRate'] + length_exponential_phase)], 'index_end_exponential': (
+                    max_growth_rate['index_GrowthRate'] + length_exponential_phase)}
+                
+                else: #I added this else statement because in some cases runs were not done by the end of exponential phase or there is no clear phase
+                    end_exponential_phase = {'end_exponential': new_df['Time'][(
+                    max_growth_rate['index_GrowthRate'])], 'index_end_exponential': (
+                    max_growth_rate['index_GrowthRate'])}
+
 
                 start_stationary_phase_df = new_df[new_df['Time']
                                                    > end_exponential_phase['end_exponential']]
@@ -197,20 +233,39 @@ class Plate(Experiment):
         # exponential phase will be from timepoint of the max Growth rate to end of exponential
         # take all the datapoints and make a boxplot
         GFP_exponential_phase_dict = {}
+        GFP_post_exponential_phase_dict = {}
+        GFP_stationary_phase_dict = {}
         
         split = self.normalized_df.groupby('variable')
         split_df = [split.get_group(x).reset_index(drop=True) for x in split.groups]
 
         for df in split_df:
 
+            #calculate exponential phase df
             current_variable = df['variable'].values[0]
             location_max_growth = self.max_growth_rate[current_variable]['index_GrowthRate']
             #Now calculate + and - 4 of that location
             exponential_phase_approximation = df.iloc[(location_max_growth-4):(location_max_growth+4)]
-            mean_exponential_phase_approximation = exponential_phase_approximation ["GFP/OD"].mean()
+            mean_exponential_phase_approximation = exponential_phase_approximation
             GFP_exponential_phase_dict[current_variable] = mean_exponential_phase_approximation
 
-        self.GFP_exponential_phase = pd.DataFrame(test.items(), columns=['variable', 'meanGFP'])
+            #calculate post exponential phase df
+            location_end_exponential = location_max_growth+5 #Here I take max growth + 5 because then when I join the dataframe together I am not dropping any data
+            location_start_stationary = self.start_stationary_phase[current_variable]['index_start_stationary']
+            post_exponential_phase_approximation = df.iloc[location_end_exponential:location_start_stationary]
+            GFP_post_exponential_phase_dict[current_variable] = post_exponential_phase_approximation
+
+            #calculate stationary phase GFP
+            stationary_phase_approximation = df.iloc[location_start_stationary:]
+            GFP_stationary_phase_dict[current_variable] = stationary_phase_approximation
+
+        self.exponential_phase_df = pd.concat(GFP_exponential_phase_dict.values()).reset_index(drop=True)
+        self.exponential_phase_df['phase'] = 'Exponential'
+        self.post_exponential_phase_df = pd.concat(GFP_post_exponential_phase_dict.values()).reset_index(drop=True)
+        self.post_exponential_phase_df['phase'] = 'Post-exponential'
+        self.stationary_phase_df = pd.concat(GFP_stationary_phase_dict.values()).reset_index(drop=True)
+        self.stationary_phase_df['phase'] = 'Stationary'
+        self.complete_df = pd.concat([self.exponential_phase_df, self.post_exponential_phase_df, self.stationary_phase_df]).reset_index(drop=True)
 
 
 
