@@ -5,9 +5,9 @@ import model
 experiment1 = model.Experiment(media='M63_Glu_CAA',
                                osmolyte='Sucrose',
                                temperature='30',
-                               date='2020-10-09',
-                               folder='Data/202009_M63GluCaa_Sucrose_37c',
-                               plot=True)
+                               date='2020-09-29',
+                               folder='Data/20200929_M63GluCaa_Sucrose_30c',
+                               plot=False)
 
 
 experiment2 = model.Experiment(media='M63_Glu_CAA',

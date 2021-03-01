@@ -11,15 +11,28 @@ def analyze_plate(filepath):
 
     plate_normalized = normalize_plate(filepath)
 
+    time = 'Time (min)'
     # Align the dataframe to a specific value for individual values
 
-    a = plate_normalized['OD'].melt(id_vars="Time (min)")
-    a = a.rename(columns=dict(zip(a.columns, ["Time", "variable", "OD"])))
+    od_df = plate_normalized['OD'].melt(id_vars=time)
+    od_df = od_df.rename(columns=dict(zip(od_df.columns, ["Time", "variable", "OD"])))
 
-    b = plate_normalized['GFP'].melt(id_vars="Time (min)")
-    b = b.rename(columns=dict(zip(b.columns, ["Time", "variable", "GFP"])))
+    gfp_df = plate_normalized['GFP'].melt(id_vars=time)
+    gfp_df = gfp_df.rename(columns=dict(zip(gfp_df.columns, ["Time", "variable", "GFP"])))
 
-    merged = a.merge(b)
+    merged = od_df.merge(gfp_df)
+
+    osmolarity = plate_normalized['osmolarity']
+    print(osmolarity)
+
+    merged['osmolarity'] = int(merged['variable'].str[3:7])
+
+    # osmo_dict = {osmolarity}
+    # print(osmo_dict)
+    # merged.replace({"osmolarity": osmo_dict})
+    print(merged)
+
+
 
     # OK its in the long format now to align it to OD
 
@@ -30,11 +43,6 @@ def analyze_plate(filepath):
         lambda x: x[0:7])
     aligned_df_long['GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['OD']
     aligned_df_long['log(OD)'] = np.log(aligned_df_long['OD'])
-
-    # if keywords.get('plot'):
-    #     print("generating plots")
-    #     root = os.path.split(filepath)[-1]
-    #     generate_plots(aligned_df_long, root)
 
     aligned_df_long = calculate_regression(aligned_df_long)
 
@@ -83,15 +91,6 @@ def calculate_regression(df, window_size=8):
     return growth_rate_calculated_df
 
 
-# def calculate_regression_long(long_df):
-#     """
-#     This function will take the long_df and calculate a rolling window
-#     fit for growth rate
-#     """
-#     long_df = long_df.groupby('variable').apply(
-#         calculate_regression).reset_index(drop=True)
-#     return long_df
-
 
 def normalize_plate(path_to_excel):
     """
@@ -100,6 +99,8 @@ def normalize_plate(path_to_excel):
     # so first we want to open and analyse a single file
 
     input_df = pd.read_excel(path_to_excel)
+
+    osmolarity_values = input_df.iloc[0:6,10:12] #columns k and l add in plate osmo values
 
     input_df_od = input_df[45:143].transpose()
     input_df_gfp = input_df[146:244].transpose()
@@ -147,45 +148,6 @@ def normalize_plate(path_to_excel):
     first_row_gfp = input_df_gfp.iloc[[0]].values[0]
     final_gfp = input_df_gfp.apply(lambda row: row - first_row_gfp, axis=1)
 
-    return {"OD": final_od, "GFP": final_gfp}
+    return {"OD": final_od, "GFP": final_gfp, "osmolarity": osmolarity_values}
 
 
-# for fitderiv here
-
-# def calculate_growth_rate(df, OD_filter=0.02):
-#     sys.stdout = open(os.devnull, 'w')  # block fitderiv from printing
-#     split = test.groupby('variable')
-#     split_df = [split.get_group(x) for x in split.groups]
-
-#     growth_rate_list = []
-
-#     for df in split_df:
-#         OD = df['OD'].values[df['OD'].values > OD_filter]
-#         time = df['Time'].values[df['OD'].values > OD_filter]
-
-#         q = fd.fitderiv(time, OD)
-#         temp_gr = {"Sample": df['variable'].values[0],
-#                    "Growth_Rate": q.ds.get('max df')}
-#         growth_rate_list.append(temp_gr)
-
-#     sys.stdout = sys.__stdout__  # re enable print
-
-#     return growth_rate_list
-
-
-# def longest_run(myList):
-#     prev = 0
-#     size = 0
-#     max_size = 0
-#     max_list = []
-
-#     for num, i in enumerate(myList):
-#         if i > (prev *0.99) and i < (prev * 1.01):
-#             size += 1
-#             if size > max_size:
-#                 max_size = size
-#                 max_list.append(num-1)
-#         else:
-#             size = 0
-#         prev = i
-#     return max_size+1, (max(max_list)-max_size+1)
