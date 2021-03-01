@@ -8,31 +8,27 @@ from scipy import stats
 
 def analyze_plate(filepath):
 
-
     plate_normalized = normalize_plate(filepath)
 
     time = 'Time (min)'
     # Align the dataframe to a specific value for individual values
 
     od_df = plate_normalized['OD'].melt(id_vars=time)
-    od_df = od_df.rename(columns=dict(zip(od_df.columns, ["Time", "variable", "OD"])))
+    od_df = od_df.rename(columns=dict(
+        zip(od_df.columns, ["Time", "variable", "OD"])))
 
     gfp_df = plate_normalized['GFP'].melt(id_vars=time)
-    gfp_df = gfp_df.rename(columns=dict(zip(gfp_df.columns, ["Time", "variable", "GFP"])))
+    gfp_df = gfp_df.rename(columns=dict(
+        zip(gfp_df.columns, ["Time", "variable", "GFP"])))
 
     merged = od_df.merge(gfp_df)
 
-    osmolarity = plate_normalized['osmolarity']
-    print(osmolarity)
+    osmolarity = plate_normalized['osmolarity'].set_index('Group')
+    osmolarity_dict = osmolarity.to_dict()
 
-    merged['osmolarity'] = int(merged['variable'].str[3:7])
-
-    # osmo_dict = {osmolarity}
-    # print(osmo_dict)
-    # merged.replace({"osmolarity": osmo_dict})
-    print(merged)
-
-
+    merged['osmolarity'] = merged['variable'].str[3:7].astype(float)
+    merged['osmolarity'] =(merged['osmolarity'].map(osmolarity_dict['osmolarity']))
+    # Here I add in all the osmolarity values extracted from the excel
 
     # OK its in the long format now to align it to OD
 
@@ -85,11 +81,11 @@ def calculate_regression(df, window_size=8):
 
         df['GrowthRate'] = regress_list
         reconstructed_df.append(df)
-    
-    growth_rate_calculated_df = pd.concat(reconstructed_df).reset_index(drop=True)
+
+    growth_rate_calculated_df = pd.concat(
+        reconstructed_df).reset_index(drop=True)
 
     return growth_rate_calculated_df
-
 
 
 def normalize_plate(path_to_excel):
@@ -100,7 +96,8 @@ def normalize_plate(path_to_excel):
 
     input_df = pd.read_excel(path_to_excel)
 
-    osmolarity_values = input_df.iloc[0:6,10:12] #columns k and l add in plate osmo values
+    # columns k and l add in plate osmo values
+    osmolarity_values = input_df.iloc[0:6, 10:12]
 
     input_df_od = input_df[45:143].transpose()
     input_df_gfp = input_df[146:244].transpose()
@@ -149,5 +146,3 @@ def normalize_plate(path_to_excel):
     final_gfp = input_df_gfp.apply(lambda row: row - first_row_gfp, axis=1)
 
     return {"OD": final_od, "GFP": final_gfp, "osmolarity": osmolarity_values}
-
-

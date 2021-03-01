@@ -1,29 +1,124 @@
 import model
 
-
-#
-experiment1 = model.Experiment(media='M63_Glu_CAA',
+experiment1 = model.Experiment(media='M63_Gly',
                                osmolyte='Sucrose',
-                               temperature='30',
-                               date='2020-09-29',
-                               folder='Data/20200929_M63GluCaa_Sucrose_30c',
-                               plot=False)
-
+                               temperature='37',
+                               date='2020-09-10',
+                               folder='Data/20200910_m63gly_37c_Sucrose',
+                               plot=True)
 
 experiment2 = model.Experiment(media='M63_Glu_CAA',
                                osmolyte='Sucrose',
+                               temperature='30',
+                               date='2020-09-29',
+                               folder='Data/20200929_m63GluCAA_30c_Sucrose',
+                               plot=False)
+
+experiment3 = model.Experiment(media='M63_Glu_CAA',
+                               osmolyte='Sucrose',
                                temperature='37',
-                               date='2020-07-30',
-                               folder='Data/20200730_m63gluCAA_sucrose'
-                               )
+                               date='2020-10-02',
+                               folder='Data/20201002_m63GluCAA_37C_Sucrose',
+                               plot=False)
 
+experiment4 = model.Experiment(media='M63_Gly_Betaine',
+                               osmolyte='Sucrose',
+                               temperature='37',
+                               date='2020-10-06',
+                               folder='Data/20201006_m63Gly_Betaine_37C_Sucrose',
+                               plot=True)
 
-experiment3 = model.Experiment(media='M63_Glu',
+experiment5 = model.Experiment(media='M63_Glu_CAA_Betaine',
+                               osmolyte='Sucrose',
+                               temperature='37',
+                               date='2020-10-09',
+                               folder='Data/20201009_m63GluCAA_Betaine_37C_Sucrose',
+                               plot=True)
+
+experiment6 = model.Experiment(media='M63_Glu_CAA',
                                osmolyte='NaCl',
                                temperature='37',
-                               date='2021-02-28',
-                               folder='Data/20210216_m63Glu_NaCl',
-                               plot=False)
+                               date='2020-10-13',
+                               folder='Data/20201013_m63GluCAA_37C_NaCl',
+                               plot=True)
+
+experiment7 = model.Experiment(media='M63_Glu_CAA_Betaine',
+                               osmolyte='NaCl',
+                               temperature='37',
+                               date='2020-10-19',
+                               folder='Data/20201019_m63GluCAA_Betaine_37C_NaCl',
+                               plot=True)
+
+
+##errror here figure it out
+experiment8 = model.Experiment(media='M63_Glu',
+                               osmolyte='Sucrose',
+                               temperature='37',
+                               date='2020-10-23',
+                               folder='Data/20201023_m63Glu_37C_Sucrose',
+                               plot=True)
+
+experiment9 = model.Experiment(media='M63_Glu',
+                               osmolyte='Sucrose',
+                               temperature='42',
+                               date='2020-10-27',
+                               folder='Data/20201027_m63Glu_42C_Sucrose',
+                               plot=True)
+
+experiment10 = model.Experiment(media='M63_Man',
+                               osmolyte='Sucrose',
+                               temperature='37',
+                               date='2020-10-27',
+                               folder='Data/20201030_m63Man_37C_Sucrose',
+                               plot=True)
+
+experiment11 = model.Experiment(media='RDM',
+                               osmolyte='Sucrose',
+                               temperature='37',
+                               date='2020-12-04',
+                               folder='Data/20201204_RDM_37C_Sucrose',
+                               plot=True)
+
+experiment12 = model.Experiment(media='M63_Gly',
+                               osmolyte='NaCl',
+                               temperature='37',
+                               date='2021-01-19',
+                               folder='Data/20210119_m63Gly_37C_NaCl',
+                               plot=True)
+
+experiment13 = model.Experiment(media='M63_Gly_Betaine',
+                               osmolyte='NaCl',
+                               temperature='37',
+                               date='2021-01-25',
+                               folder='Data/20210125_m63Gly_Betaine_37C_NaCl',
+                               plot=True)
+
+experiment14 = model.Experiment(media='M63_Gly',
+                               osmolyte='NaCl',
+                               temperature='37',
+                               date='2021-02-10',
+                               folder='Data/20210202_m63Gly_37C_NaCl',
+                               plot=True)
+
+experiment15 = model.Experiment(media='M63_Glu',
+                               osmolyte='NaCl',
+                               temperature='37',
+                               date='2021-02-16',
+                               folder='Data/20210216_m63Glu_37C_NaCl',
+                               plot=True)
+
+
+
+
+
+
+
+# experiment3 = model.Experiment(media='M63_Glu',
+#                                osmolyte='NaCl',
+#                                temperature='37',
+#                                date='2021-02-28',
+#                                folder='Data/20210216_m63Glu_NaCl',
+#                                plot=False)
 
 
 #files_to_analyze = []
