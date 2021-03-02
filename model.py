@@ -142,9 +142,11 @@ class Plate():
             current_variable = temp_df['variable'].values[0]
             new_df = temp_df[temp_df['OD'] > filter_OD]
             if new_df.empty:
-                max_growth_rate = 0
-                end_exponential_phase = np.nan
-                start_stationary_phase = np.nan
+                max_growth_rate = {'GrowthRate': 0, 'index_GrowthRate': np.nan}
+                end_exponential_phase = {
+                    'end_exponential': np.nan, 'index_end_exponential': np.nan}
+                start_stationary_phase = {
+                    'start_stationary': np.nan, 'index_start_stationary': np.nan}
             else:
                 max_growth_rate = {'GrowthRate': new_df['GrowthRate'].max(
                 ), 'index_GrowthRate': new_df['GrowthRate'].idxmax()}
@@ -159,12 +161,24 @@ class Plate():
                         max_growth_rate['index_GrowthRate'])], 'index_end_exponential': (
                         max_growth_rate['index_GrowthRate'])}
 
+                
                 start_stationary_phase_df = new_df[new_df['Time']
                                                    > end_exponential_phase['end_exponential']]
                 index_start_stationary_phase = start_stationary_phase_df.index[
-                    start_stationary_phase_df['GrowthRate'] < 0.05][0]
-                start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
-                    index_start_stationary_phase], 'index_start_stationary': index_start_stationary_phase}
+                    start_stationary_phase_df['GrowthRate'] < 0.05]
+                
+                if not index_start_stationary_phase.empty:
+                    index_start_stationary_phase = index_start_stationary_phase[0]
+                else:
+                    index_start_stationary_phase = -1 #Here I set the index to the last measurement
+                    #you could debate that this is incorrect as cells mayb not be in stationary phase yet
+                
+                if not index_start_stationary_phase == -1:
+                    start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
+                        index_start_stationary_phase], 'index_start_stationary': index_start_stationary_phase}
+                if index_start_stationary_phase == -1:
+                    start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
+                        index_start_stationary_phase:], 'index_start_stationary': index_start_stationary_phase}
 
             max_growth_rate_dict[current_variable] = max_growth_rate
             end_exponential_phase_dict[current_variable] = end_exponential_phase
@@ -245,37 +259,49 @@ class Plate():
                     for x in split.groups]
 
         for df in split_df:
-
+            
             # calculate exponential phase df
             current_variable = df['variable'].values[0]
+
             location_max_growth = self.max_growth_rate[current_variable]['index_GrowthRate']
-            # Now calculate + and - 4 of that location
-            exponential_phase_approximation = df.iloc[(
-                location_max_growth-4):(location_max_growth+4)]
-            mean_exponential_phase_approximation = exponential_phase_approximation
-            GFP_exponential_phase_dict[current_variable] = mean_exponential_phase_approximation
+        # Now calculate + and - 4 of that location
+            if np.isnan(location_max_growth):
+                print(f'going into np loop with {current_variable}')
+                exponential_phase_approximation = np.nan
+            else:
+                print(f'going into normal with {current_variable} growth loc {location_max_growth}')    
+                exponential_phase_approximation = df.iloc[(
+                    location_max_growth-4):(location_max_growth+4)]
+            GFP_exponential_phase_dict[current_variable] = exponential_phase_approximation
 
             # calculate post exponential phase df
             # Here I take max growth + 5 because then when I join the dataframe together I am not dropping any data
-            location_end_exponential = location_max_growth+5
-            location_start_stationary = self.start_stationary_phase[
-                current_variable]['index_start_stationary']
-            post_exponential_phase_approximation = df.iloc[
-                location_end_exponential:location_start_stationary]
+            if np.isnan(location_max_growth):
+                post_exponential_phase_approximation = np.nan
+            else:
+                location_end_exponential = location_max_growth+5
+                location_start_stationary = self.start_stationary_phase[
+                    current_variable]['index_start_stationary']
+                post_exponential_phase_approximation = df.iloc[
+                    location_end_exponential:location_start_stationary]
             GFP_post_exponential_phase_dict[current_variable] = post_exponential_phase_approximation
 
             # calculate stationary phase GFP
-            stationary_phase_approximation = df.iloc[location_start_stationary:]
+            if np.isnan(location_max_growth):
+                stationary_phase_approximation = np.nan
+            else:
+                stationary_phase_approximation = df.iloc[location_start_stationary:]
             GFP_stationary_phase_dict[current_variable] = stationary_phase_approximation
 
+
         self.exponential_phase_df = pd.concat(
-            GFP_exponential_phase_dict.values()).reset_index(drop=True)
+            pd.Series(GFP_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
         self.exponential_phase_df['phase'] = 'Exponential'
         self.post_exponential_phase_df = pd.concat(
-            GFP_post_exponential_phase_dict.values()).reset_index(drop=True)
+            pd.Series(GFP_post_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
         self.post_exponential_phase_df['phase'] = 'Post-exponential'
         self.stationary_phase_df = pd.concat(
-            GFP_stationary_phase_dict.values()).reset_index(drop=True)
+            pd.Series(GFP_stationary_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
         self.stationary_phase_df['phase'] = 'Stationary'
         self.complete_df = pd.concat(
             [self.exponential_phase_df, self.post_exponential_phase_df, self.stationary_phase_df]).reset_index(drop=True)

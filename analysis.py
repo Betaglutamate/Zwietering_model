@@ -50,7 +50,6 @@ experiment7 = model.Experiment(media='M63_Glu_CAA_Betaine',
                                plot=True)
 
 
-##errror here figure it out
 experiment8 = model.Experiment(media='M63_Glu',
                                osmolyte='Sucrose',
                                temperature='37',
@@ -58,6 +57,7 @@ experiment8 = model.Experiment(media='M63_Glu',
                                folder='Data/20201023_m63Glu_37C_Sucrose',
                                plot=True)
 
+##errror here figure it out
 experiment9 = model.Experiment(media='M63_Glu',
                                osmolyte='Sucrose',
                                temperature='42',
