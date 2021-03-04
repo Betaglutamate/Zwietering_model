@@ -13,9 +13,18 @@ def analyze_plate(filepath):
     time = 'Time (min)'
     # Align the dataframe to a specific value for individual values
 
+    normalized_od_df = plate_normalized['OD'].copy()
+    first_row_od = plate_normalized['OD'].iloc[0:10, 1:].mean(axis = 0)
+    normalized_od_df.iloc[:, 1:] = plate_normalized['OD'].iloc[:, 1:].apply(lambda row: row - first_row_od, axis=1)
+    final_od_normalized = normalized_od_df.astype('float')
+    final_od_normalized = final_od_normalized.melt(id_vars=time)
+    final_od_normalized = final_od_normalized.rename(columns=dict(
+        zip(final_od_normalized.columns, ["Time", "variable", "norm_OD"])))
+
     od_df = plate_normalized['OD'].melt(id_vars=time)
     od_df = od_df.rename(columns=dict(
         zip(od_df.columns, ["Time", "variable", "OD"])))
+    od_df['norm_OD'] = final_od_normalized["norm_OD"]
 
     gfp_df = plate_normalized['GFP'].melt(id_vars=time)
     gfp_df = gfp_df.rename(columns=dict(
@@ -38,8 +47,8 @@ def analyze_plate(filepath):
 
     aligned_df_long['Group'] = aligned_df_long['variable'].apply(
         lambda x: x[0:7])
-    aligned_df_long['GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['OD']
-    aligned_df_long['log(OD)'] = np.log(aligned_df_long['OD'].astype('float'))
+    aligned_df_long['GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['norm_OD']
+    aligned_df_long['log(OD)'] = np.log(aligned_df_long['OD'])
 
     aligned_df_long = calculate_regression(aligned_df_long)
 
@@ -145,19 +154,16 @@ def normalize_plate(path_to_excel):
     # this is because small log OD values throw of the calculation
 
     final_od = input_df_od
-    final_od = final_od.astype('float')
+    final_od_raw = final_od.astype('float')
     
-    # first_row_od = input_df_od.iloc[0:10, 1:].mean(axis = 0)
-    # final_od.iloc[:, 1:] = input_df_od.iloc[:, 1:].apply(lambda row: row - first_row_od, axis=1)
-    # final_od = input_df_od.apply(lambda row: row - first_row_od, axis=1)
-    # first_row_gfp = input_df_gfp.iloc[[0]].values[0]
-    # final_gfp = input_df_gfp.apply(lambda row: row - first_row_gfp, axis=1)
-
-    # first_row_gfp = input_df_gfp.iloc[0:10, 1:].mean(axis = 0)
-    # final_gfp.iloc[:, 1:] = input_df_gfp.iloc[:, 1:].apply(lambda row: row - first_row_od, axis=1)
-
     final_gfp = input_df_gfp
     final_gfp = final_gfp.astype('float')
 
+    first_row_gfp = input_df_gfp.iloc[0:10, 1:].mean(axis = 0)
+    final_gfp.iloc[:, 1:] = input_df_gfp.iloc[:, 1:].apply(lambda row: row - first_row_gfp, axis=1)
+    final_gfp = final_gfp.astype('float')
 
-    return {"OD": final_od, "GFP": final_gfp, "osmolarity": osmolarity_values}
+
+
+
+    return {"OD": final_od_raw, "GFP": final_gfp, "osmolarity": osmolarity_values}

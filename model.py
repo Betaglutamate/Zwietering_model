@@ -2,6 +2,7 @@ import analysisFunctions as af
 from pathlib import Path
 import os
 import plotnine as gg
+import seaborn as sns
 import pandas as pd
 import numpy as np
 
@@ -34,6 +35,7 @@ class Experiment:
 
         if plot == True:
             self.generate_plots()
+            self.plot_gfp()
 
     def clean_data(self):
         files_to_analyze = []
@@ -96,6 +98,20 @@ class Experiment:
             save_string = f"GFPOD_{current_group}.png"
             gg.ggsave(gfp_plot, os.path.join(
                 plot_path, save_string), width=10, height=10)
+
+
+        gfp_boxplot = sns.boxplot(x="osmolarity", y="normalised_GFP/OD", saturation=0.9, dodge=False, hue='phase', data=self.experiment_df)
+        for patch in gfp_boxplot.artists:
+            r, g, b, a = patch.get_facecolor()
+            patch.set_facecolor((r, g, b, .6))
+
+        figure = gfp_boxplot.get_figure()
+        plot_path = os.path.join(self.folder, "Experiment_plots")
+
+        save_string = f"GFP_boxplot_{self.name}.png"
+        save_path = os.path.join(plot_path, save_string)
+
+        figure.savefig(save_path, dpi=400)
 
 
 class Plate():
