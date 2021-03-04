@@ -8,6 +8,21 @@ import numpy as np
 
 class Experiment:
 
+    gg.theme_set(gg.theme_bw())
+    graph_theme = (
+        gg.theme(
+            plot_title=gg.element_text(face="bold", size=12),
+            legend_background=gg.element_rect(
+                fill="white", size=4, colour="white"),
+            # legend.justification = c(0, 1),
+            # legend.position = c(0, 1),
+            axis_ticks=gg.element_line(colour="grey", size=0.3),
+            panel_grid_major=gg.element_line(colour="grey", size=0.3),
+            panel_grid_minor=gg.element_blank(),
+            text=gg.element_text(size=21)
+        )
+    )
+
     def __init__(self, media, osmolyte, temperature, date, folder, plot=False):
         self.name = media
         self.osmolyte = osmolyte
@@ -51,6 +66,7 @@ class Experiment:
             repeat.generate_plots()
             repeat.plot_growth_rate()
 
+
     def combine_all_repeats(self):
         all_dfs = []
         for repeat in self.list_of_repeats:
@@ -59,6 +75,27 @@ class Experiment:
             all_dfs.append(repeat.complete_df)
 
         self.experiment_df = pd.concat(all_dfs).reset_index(drop=True)
+
+    def plot_gfp(self):
+
+        plot_path = os.path.join(self.folder, "Experiment_plots")
+        Path(plot_path).mkdir(parents=True, exist_ok=True)
+        split = self.experiment_df.groupby(['Group'])
+        split_df = [split.get_group(x) for x in split.groups]
+
+        for df in split_df:
+            current_group = df['Group'].values[0]
+            gfp_plot = (
+                gg.ggplot(df) +
+                gg.aes(x='Time', y='normalised_GFP/OD', color='variable') +
+                gg.geom_point() +
+                gg.ggtitle(current_group) +
+                self.graph_theme
+            )
+
+            save_string = f"GFPOD_{current_group}.png"
+            gg.ggsave(gfp_plot, os.path.join(
+                plot_path, save_string), width=10, height=10)
 
 
 class Plate():
@@ -198,19 +235,35 @@ class Plate():
         split_df = [split.get_group(x) for x in split.groups]
 
         for df in split_df:
+            df_mean = df['OD'].values[0:10].mean()
+            df_std = df['OD'].values[0:10].std()
+            std1 = df['Time'][df['OD']>(df_mean +df_std*1)].values[0]
+            std5 = df['Time'][df['OD']>(df_mean + df_std*5)].values[0]
+            std10 = df['Time'][df['OD']>(df_mean + df_std*10)].values[0]
+            std20 = df['Time'][df['OD']>(df_mean + df_std*20)].values[0]
+            std100 = df['Time'][df['OD']>(df_mean + df_std*100)].values[0]
+
             current_variable = df['variable'].values[0]
-            LN_group_plot = (
+            gr_plot = (
                 gg.ggplot(df) +
                 gg.aes(x='Time', y='GrowthRate', color='variable') +
                 gg.geom_point() +
                 gg.geom_hline(yintercept=self.max_growth_rate[current_variable]['GrowthRate'], color='black') +
+                gg.geom_vline(xintercept=std1, color='red') +
+                gg.geom_vline(xintercept=std5, color='red') +
+                gg.geom_vline(xintercept=std10, color='red') +
+                gg.geom_vline(xintercept=std20, color='red') +
+                gg.geom_vline(xintercept=std100, color='red') +
+
+
                 gg.geom_vline(xintercept=self.end_exponential_phase[current_variable]['end_exponential'], color='blue') +
                 gg.geom_vline(xintercept=self.start_stationary_phase[current_variable]['start_stationary'], color='green') +
                 gg.ggtitle(current_variable) +
                 self.graph_theme
             )
             save_string = f"GR_{current_variable}_{self.repeat_number}.png"
-            gg.ggsave(LN_group_plot, os.path.join(plot_path, save_string))
+            gg.ggsave(gr_plot, os.path.join(plot_path, save_string))
+        
 
     def subtract_wt(self):
         # Now I should split self.data into containing MZ and WT
@@ -266,10 +319,8 @@ class Plate():
             location_max_growth = self.max_growth_rate[current_variable]['index_GrowthRate']
         # Now calculate + and - 4 of that location
             if np.isnan(location_max_growth):
-                print(f'going into np loop with {current_variable}')
                 exponential_phase_approximation = np.nan
             else:
-                print(f'going into normal with {current_variable} growth loc {location_max_growth}')    
                 exponential_phase_approximation = df.iloc[(
                     location_max_growth-4):(location_max_growth+4)]
             GFP_exponential_phase_dict[current_variable] = exponential_phase_approximation

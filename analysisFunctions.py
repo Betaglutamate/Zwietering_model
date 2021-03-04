@@ -35,10 +35,11 @@ def analyze_plate(filepath):
     aligned_df_long = merged.groupby('variable').apply(
         align_df).reset_index(drop=True)
 
+
     aligned_df_long['Group'] = aligned_df_long['variable'].apply(
         lambda x: x[0:7])
     aligned_df_long['GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['OD']
-    aligned_df_long['log(OD)'] = np.log(aligned_df_long['OD'])
+    aligned_df_long['log(OD)'] = np.log(aligned_df_long['OD'].astype('float'))
 
     aligned_df_long = calculate_regression(aligned_df_long)
 
@@ -53,9 +54,11 @@ def align_df(split_df, **kwargs):
 
     new_time = split_df["Time"].values
     st_dev = np.std(split_df['OD'].iloc[0:10])
-    od_filter_value = st_dev*10
+    mean = np.mean(split_df['OD'].iloc[0:10])
+    od_filter_value = (mean+(st_dev*10))
     if kwargs:
         od_filter_value = kwargs.get('od')
+
     filtered_new = split_df.loc[split_df['OD'] >
                                 od_filter_value].reset_index(drop=True)
     filtered_new["Time"] = new_time[0:len(filtered_new)]
@@ -138,11 +141,23 @@ def normalize_plate(path_to_excel):
     input_df_gfp["Time (min)"] = new_time
 
     # now I want to subtract the average of the first row from all values in the dataframe
+    # turns out not subtracting the baseline works way betetr when calculating the rolling growth rate
+    # this is because small log OD values throw of the calculation
 
-    first_row_od = input_df_od.iloc[[0]].values[0]
-    final_od = input_df_od.apply(lambda row: row - first_row_od, axis=1)
+    final_od = input_df_od
+    final_od = final_od.astype('float')
+    
+    # first_row_od = input_df_od.iloc[0:10, 1:].mean(axis = 0)
+    # final_od.iloc[:, 1:] = input_df_od.iloc[:, 1:].apply(lambda row: row - first_row_od, axis=1)
+    # final_od = input_df_od.apply(lambda row: row - first_row_od, axis=1)
+    # first_row_gfp = input_df_gfp.iloc[[0]].values[0]
+    # final_gfp = input_df_gfp.apply(lambda row: row - first_row_gfp, axis=1)
 
-    first_row_gfp = input_df_gfp.iloc[[0]].values[0]
-    final_gfp = input_df_gfp.apply(lambda row: row - first_row_gfp, axis=1)
+    # first_row_gfp = input_df_gfp.iloc[0:10, 1:].mean(axis = 0)
+    # final_gfp.iloc[:, 1:] = input_df_gfp.iloc[:, 1:].apply(lambda row: row - first_row_od, axis=1)
+
+    final_gfp = input_df_gfp
+    final_gfp = final_gfp.astype('float')
+
 
     return {"OD": final_od, "GFP": final_gfp, "osmolarity": osmolarity_values}

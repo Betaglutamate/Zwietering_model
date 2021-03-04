@@ -5,7 +5,7 @@ experiment1 = model.Experiment(media='M63_Gly',
                                temperature='37',
                                date='2020-09-10',
                                folder='Data/20200910_m63gly_37c_Sucrose',
-                               plot=True)
+                               plot=False)
 
 experiment2 = model.Experiment(media='M63_Glu_CAA',
                                osmolyte='Sucrose',
