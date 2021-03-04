@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import numpy as np
 import csv
-import plotnine as gg
 from scipy import stats
 
 
@@ -24,7 +23,7 @@ def analyze_plate(filepath):
     od_df = plate_normalized['OD'].melt(id_vars=time)
     od_df = od_df.rename(columns=dict(
         zip(od_df.columns, ["Time", "variable", "OD"])))
-    od_df['norm_OD'] = final_od_normalized["norm_OD"]
+    od_df.loc[:, 'norm_OD'] = final_od_normalized["norm_OD"]
 
     gfp_df = plate_normalized['GFP'].melt(id_vars=time)
     gfp_df = gfp_df.rename(columns=dict(
@@ -35,8 +34,8 @@ def analyze_plate(filepath):
     osmolarity = plate_normalized['osmolarity'].set_index('Group')
     osmolarity_dict = osmolarity.to_dict()
 
-    merged['osmolarity'] = merged['variable'].str[3:7].astype(float)
-    merged['osmolarity'] =(merged['osmolarity'].map(osmolarity_dict['osmolarity']))
+    merged.loc[:, 'osmolarity'] = merged['variable'].str[3:7].astype(float)
+    merged.loc[:, 'osmolarity'] =merged['osmolarity'].map(osmolarity_dict['osmolarity'])
     # Here I add in all the osmolarity values extracted from the excel
 
     # OK its in the long format now to align it to OD
@@ -45,10 +44,10 @@ def analyze_plate(filepath):
         align_df).reset_index(drop=True)
 
 
-    aligned_df_long['Group'] = aligned_df_long['variable'].apply(
+    aligned_df_long.loc[:, 'Group'] = aligned_df_long['variable'].apply(
         lambda x: x[0:7])
-    aligned_df_long['GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['norm_OD']
-    aligned_df_long['log(OD)'] = np.log(aligned_df_long['OD'])
+    aligned_df_long.loc[:, 'GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['norm_OD']
+    aligned_df_long.loc[:, 'log(OD)'] = np.log(aligned_df_long['OD'])
 
     aligned_df_long = calculate_regression(aligned_df_long)
 
@@ -70,7 +69,7 @@ def align_df(split_df, **kwargs):
 
     filtered_new = split_df.loc[split_df['OD'] >
                                 od_filter_value].reset_index(drop=True)
-    filtered_new["Time"] = new_time[0:len(filtered_new)]
+    filtered_new.loc[:,"Time"] = new_time[0:len(filtered_new)]
 
     return filtered_new
 
@@ -89,9 +88,9 @@ def calculate_regression(df, window_size=8):
                 x=df['Time'].values[length:length+window_size],
                 y=df['log(OD)'].values[length:length+window_size]
             )
-            regress_list.append((res.slope))
+            regress_list.append(res.slope)
 
-        df['GrowthRate'] = regress_list
+        df.loc[:, 'GrowthRate'] = pd.Series(regress_list, index=df.index)
         reconstructed_df.append(df)
 
     growth_rate_calculated_df = pd.concat(
@@ -146,8 +145,8 @@ def normalize_plate(path_to_excel):
 
     # now find the Time in minutes
     new_time = [round((x*(7.6)/60), 2) for x in range(0, len(input_df_od))]
-    input_df_od["Time (min)"] = new_time
-    input_df_gfp["Time (min)"] = new_time
+    input_df_od.loc[:,"Time (min)"] = new_time
+    input_df_gfp.loc[:,"Time (min)"] = new_time
 
     # now I want to subtract the average of the first row from all values in the dataframe
     # turns out not subtracting the baseline works way betetr when calculating the rolling growth rate

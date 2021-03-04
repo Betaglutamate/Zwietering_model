@@ -12,14 +12,14 @@ experiment2 = model.Experiment(media='M63_Glu_CAA',
                                temperature='30',
                                date='2020-09-29',
                                folder='Data/20200929_m63GluCAA_30c_Sucrose',
-                               plot=False)
+                               plot=True)
 
 experiment3 = model.Experiment(media='M63_Glu_CAA',
                                osmolyte='Sucrose',
                                temperature='37',
                                date='2020-10-02',
                                folder='Data/20201002_m63GluCAA_37C_Sucrose',
-                               plot=False)
+                               plot=True)
 
 experiment4 = model.Experiment(media='M63_Gly_Betaine',
                                osmolyte='Sucrose',

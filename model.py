@@ -1,6 +1,7 @@
 import analysisFunctions as af
 from pathlib import Path
 import os
+import matplotlib.pyplot as plt
 import plotnine as gg
 import seaborn as sns
 import pandas as pd
@@ -30,6 +31,7 @@ class Experiment:
         self.temperature = temperature
         self.date = date
         self.folder = folder
+        print(f"processing {self.name}")
         self.clean_data()
         self.combine_all_repeats()
 
@@ -73,7 +75,7 @@ class Experiment:
         all_dfs = []
         for repeat in self.list_of_repeats:
             repeat_name = repeat.repeat_number
-            repeat.complete_df['repeat'] = repeat_name
+            repeat.complete_df.loc[:, 'repeat'] = repeat_name
             all_dfs.append(repeat.complete_df)
 
         self.experiment_df = pd.concat(all_dfs).reset_index(drop=True)
@@ -97,7 +99,7 @@ class Experiment:
 
             save_string = f"GFPOD_{current_group}.png"
             gg.ggsave(gfp_plot, os.path.join(
-                plot_path, save_string), width=10, height=10)
+                plot_path, save_string), width=10, height=10, verbose = False)
 
 
         gfp_boxplot = sns.boxplot(x="osmolarity", y="normalised_GFP/OD", saturation=0.9, dodge=False, hue='phase', data=self.experiment_df)
@@ -112,6 +114,7 @@ class Experiment:
         save_path = os.path.join(plot_path, save_string)
 
         figure.savefig(save_path, dpi=400)
+        plt.close()
 
 
 class Plate():
@@ -165,7 +168,7 @@ class Plate():
 
             save_string = f"OD_{current_group}_{self.repeat_number}.png"
             gg.ggsave(OD_group_plot, os.path.join(
-                plot_path, save_string), width=10, height=10)
+                plot_path, save_string), width=10, height=10, verbose = False)
 
         for df in split_df:
             LN_group_plot = (
@@ -176,7 +179,7 @@ class Plate():
                 self.graph_theme
             )
             save_string = f"lnOD_{df['Group'].values[0]}_{self.repeat_number}.png"
-            gg.ggsave(LN_group_plot, os.path.join(plot_path, save_string))
+            gg.ggsave(LN_group_plot, os.path.join(plot_path, save_string), verbose = False)
 
     def calculate_max_growth_rate(self):
 
@@ -251,34 +254,52 @@ class Plate():
         split_df = [split.get_group(x) for x in split.groups]
 
         for df in split_df:
-            df_mean = df['OD'].values[0:10].mean()
-            df_std = df['OD'].values[0:10].std()
-            std1 = df['Time'][df['OD']>(df_mean +df_std*1)].values[0]
-            std5 = df['Time'][df['OD']>(df_mean + df_std*5)].values[0]
-            std10 = df['Time'][df['OD']>(df_mean + df_std*10)].values[0]
-            std20 = df['Time'][df['OD']>(df_mean + df_std*20)].values[0]
-            std100 = df['Time'][df['OD']>(df_mean + df_std*100)].values[0]
+            df = df.dropna()
+            try:
+                df_mean = df['OD'].values[0:10].mean()
+                df_std = df['OD'].values[0:10].std()
+                std1 = df['Time'][df['OD']>(df_mean +df_std*1)].values[0]
+                std5 = df['Time'][df['OD']>(df_mean + df_std*5)].values[0]
+                std10 = df['Time'][df['OD']>(df_mean + df_std*10)].values[0]
+                std20 = df['Time'][df['OD']>(df_mean + df_std*20)].values[0]
 
-            current_variable = df['variable'].values[0]
-            gr_plot = (
-                gg.ggplot(df) +
-                gg.aes(x='Time', y='GrowthRate', color='variable') +
-                gg.geom_point() +
-                gg.geom_hline(yintercept=self.max_growth_rate[current_variable]['GrowthRate'], color='black') +
-                gg.geom_vline(xintercept=std1, color='red') +
-                gg.geom_vline(xintercept=std5, color='red') +
-                gg.geom_vline(xintercept=std10, color='red') +
-                gg.geom_vline(xintercept=std20, color='red') +
-                gg.geom_vline(xintercept=std100, color='red') +
+                current_variable = df['variable'].values[0]
+                gr_plot = (
+                    gg.ggplot(df) +
+                    gg.aes(x='Time', y='GrowthRate', color='variable') +
+                    gg.geom_point() +
+                    gg.geom_hline(yintercept=self.max_growth_rate[current_variable]['GrowthRate'], color='black') +
+                    gg.geom_vline(xintercept=std1, color='red') +
+                    gg.geom_vline(xintercept=std5, color='red') +
+                    gg.geom_vline(xintercept=std10, color='red') +
+                    gg.geom_vline(xintercept=std20, color='red') +
 
+                    gg.geom_vline(xintercept=self.end_exponential_phase[current_variable]['end_exponential'], color='blue') +
+                    gg.geom_vline(xintercept=self.start_stationary_phase[current_variable]['start_stationary'], color='green') +
+                    gg.ggtitle(current_variable) +
+                    self.graph_theme
+                )
+                save_string = f"GR_{current_variable}_{self.repeat_number}.png"
+                gg.ggsave(gr_plot, os.path.join(plot_path, save_string), verbose = False)
+            except:
+                current_variable = df['variable'].values[0]
+                gr_plot = (
+                    gg.ggplot(df) +
+                    gg.aes(x='Time', y='GrowthRate', color='variable') +
+                    gg.geom_point() +
+                    gg.geom_hline(yintercept=self.max_growth_rate[current_variable]['GrowthRate'], color='black') +
+                    gg.geom_vline(xintercept=std1, color='red') +
+                    gg.geom_vline(xintercept=std5, color='red') +
+                    gg.geom_vline(xintercept=std10, color='red') +
 
-                gg.geom_vline(xintercept=self.end_exponential_phase[current_variable]['end_exponential'], color='blue') +
-                gg.geom_vline(xintercept=self.start_stationary_phase[current_variable]['start_stationary'], color='green') +
-                gg.ggtitle(current_variable) +
-                self.graph_theme
-            )
-            save_string = f"GR_{current_variable}_{self.repeat_number}.png"
-            gg.ggsave(gr_plot, os.path.join(plot_path, save_string))
+                    gg.geom_vline(xintercept=self.end_exponential_phase[current_variable]['end_exponential'], color='blue') +
+                    gg.geom_vline(xintercept=self.start_stationary_phase[current_variable]['start_stationary'], color='green') +
+                    gg.ggtitle(current_variable) +
+                    self.graph_theme
+                )
+                save_string = f"GR_{current_variable}_{self.repeat_number}.png"
+                gg.ggsave(gr_plot, os.path.join(plot_path, save_string), verbose = False)
+
         
 
     def subtract_wt(self):
@@ -302,13 +323,13 @@ class Plate():
                     wt_variable = wt_variable.reset_index(drop=True)
                     subtract_col = mz_variable['GFP/OD'].reset_index(
                         drop=True) - wt_variable['GFP/OD'].reset_index(drop=True)
-                    mz_variable['normalised_GFP/OD'] = subtract_col
-                    mz_variable['wt_variable'] = wt_variable['variable']
-                    mz_variable['wt_OD'] = wt_variable['OD']
-                    mz_variable['wt_GFP'] = wt_variable['GFP']
-                    mz_variable['wt_log(OD)'] = wt_variable['log(OD)']
-                    mz_variable['wt_GrowthRate'] = wt_variable['GrowthRate']
-                    mz_variable['wt_Group'] = wt_variable['Group']
+                    mz_variable.loc[:, 'normalised_GFP/OD'] = subtract_col
+                    mz_variable.loc[:, 'wt_OD'] = wt_variable['OD']
+                    mz_variable.loc[:, 'wt_variable'] = wt_variable['variable']
+                    mz_variable.loc[:, 'wt_GFP'] = wt_variable['GFP']
+                    mz_variable.loc[:, 'wt_log(OD)'] = wt_variable['log(OD)']
+                    mz_variable.loc[:, 'wt_GrowthRate'] = wt_variable['GrowthRate']
+                    mz_variable.loc[:, 'wt_Group'] = wt_variable['Group']
                     subtracted_df.append(mz_variable)
                     self.normalized_df = pd.concat(
                         subtracted_df).dropna().reset_index(drop=True)
@@ -363,12 +384,12 @@ class Plate():
 
         self.exponential_phase_df = pd.concat(
             pd.Series(GFP_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
-        self.exponential_phase_df['phase'] = 'Exponential'
+        self.exponential_phase_df.loc[:, 'phase'] = 'Exponential'
         self.post_exponential_phase_df = pd.concat(
             pd.Series(GFP_post_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
-        self.post_exponential_phase_df['phase'] = 'Post-exponential'
+        self.post_exponential_phase_df.loc[:, 'phase'] = 'Post-exponential'
         self.stationary_phase_df = pd.concat(
             pd.Series(GFP_stationary_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
-        self.stationary_phase_df['phase'] = 'Stationary'
+        self.stationary_phase_df.loc[:, 'phase'] = 'Stationary'
         self.complete_df = pd.concat(
             [self.exponential_phase_df, self.post_exponential_phase_df, self.stationary_phase_df]).reset_index(drop=True)
