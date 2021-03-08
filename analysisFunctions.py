@@ -13,8 +13,6 @@ def analyze_plate(filepath):
     # Align the dataframe to a specific value for individual values
 
     normalized_od_df = plate_normalized['OD'].copy()
-    first_row_od = plate_normalized['OD'].iloc[0:10, 1:].mean(axis = 0)
-    normalized_od_df.iloc[:, 1:] = plate_normalized['OD'].iloc[:, 1:].apply(lambda row: row - first_row_od, axis=1)
     final_od_normalized = normalized_od_df.astype('float')
     final_od_normalized = final_od_normalized.melt(id_vars=time)
     final_od_normalized = final_od_normalized.rename(columns=dict(
@@ -35,7 +33,8 @@ def analyze_plate(filepath):
     osmolarity_dict = osmolarity.to_dict()
 
     merged.loc[:, 'osmolarity'] = merged['variable'].str[3:7].astype(float)
-    merged.loc[:, 'osmolarity'] =merged['osmolarity'].map(osmolarity_dict['osmolarity'])
+    merged.loc[:, 'osmolarity'] = merged['osmolarity'].map(
+        osmolarity_dict['osmolarity'])
     # Here I add in all the osmolarity values extracted from the excel
 
     # OK its in the long format now to align it to OD
@@ -43,10 +42,10 @@ def analyze_plate(filepath):
     aligned_df_long = merged.groupby('variable').apply(
         align_df).reset_index(drop=True)
 
-
     aligned_df_long.loc[:, 'Group'] = aligned_df_long['variable'].apply(
         lambda x: x[0:7])
-    aligned_df_long.loc[:, 'GFP/OD'] = aligned_df_long['GFP'] / aligned_df_long['norm_OD']
+    aligned_df_long.loc[:, 'GFP/OD'] = aligned_df_long['GFP'] / \
+        aligned_df_long['norm_OD']
     aligned_df_long.loc[:, 'log(OD)'] = np.log(aligned_df_long['OD'])
 
     aligned_df_long = calculate_regression(aligned_df_long)
@@ -63,13 +62,13 @@ def align_df(split_df, **kwargs):
     new_time = split_df["Time"].values
     st_dev = np.std(split_df['OD'].iloc[0:10])
     mean = np.mean(split_df['OD'].iloc[0:10])
-    od_filter_value = (mean+(st_dev*10))
+    od_filter_value = (mean+(st_dev*3))
     if kwargs:
         od_filter_value = kwargs.get('od')
 
     filtered_new = split_df.loc[split_df['OD'] >
                                 od_filter_value].reset_index(drop=True)
-    filtered_new.loc[:,"Time"] = new_time[0:len(filtered_new)]
+    filtered_new.loc[:, "Time"] = new_time[0:len(filtered_new)]
 
     return filtered_new
 
@@ -145,24 +144,27 @@ def normalize_plate(path_to_excel):
 
     # now find the Time in minutes
     new_time = [round((x*(7.6)/60), 2) for x in range(0, len(input_df_od))]
-    input_df_od.loc[:,"Time (min)"] = new_time
-    input_df_gfp.loc[:,"Time (min)"] = new_time
+    input_df_od.loc[:, "Time (min)"] = new_time
+    input_df_gfp.loc[:, "Time (min)"] = new_time
 
     # now I want to subtract the average of the first row from all values in the dataframe
     # turns out not subtracting the baseline works way betetr when calculating the rolling growth rate
     # this is because small log OD values throw of the calculation
 
     final_od = input_df_od
-    final_od_raw = final_od.astype('float')
-    
+    # final_od_raw = final_od.astype('float')
+
+    first_row_od = input_df_od.iloc[0:100, 1:].min(axis=0)
+    final_od.iloc[:, 1:] = input_df_od.iloc[:, 1:].apply(
+        lambda row: row - first_row_od, axis=1)
+    final_od = final_od.astype('float')
+
     final_gfp = input_df_gfp
+    #final_gfp = final_gfp.astype('float')
+
+    first_row_gfp = input_df_gfp.iloc[0:100, 1:].min(axis=0)
+    final_gfp.iloc[:, 1:] = input_df_gfp.iloc[:, 1:].apply(
+        lambda row: row - first_row_gfp, axis=1)
     final_gfp = final_gfp.astype('float')
 
-    first_row_gfp = input_df_gfp.iloc[0:10, 1:].mean(axis = 0)
-    final_gfp.iloc[:, 1:] = input_df_gfp.iloc[:, 1:].apply(lambda row: row - first_row_gfp, axis=1)
-    final_gfp = final_gfp.astype('float')
-
-
-
-
-    return {"OD": final_od_raw, "GFP": final_gfp, "osmolarity": osmolarity_values}
+    return {"OD": final_od, "GFP": final_gfp, "osmolarity": osmolarity_values}

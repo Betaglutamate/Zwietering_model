@@ -1,11 +1,13 @@
 import model
+import warnings
+warnings.filterwarnings("ignore")
 
 experiment1 = model.Experiment(media='M63_Gly',
                                osmolyte='Sucrose',
                                temperature='37',
                                date='2020-09-10',
                                folder='Data/20200910_m63gly_37c_Sucrose',
-                               plot=True)
+                               plot=False)
 
 experiment2 = model.Experiment(media='M63_Glu_CAA',
                                osmolyte='Sucrose',
@@ -57,7 +59,6 @@ experiment8 = model.Experiment(media='M63_Glu',
                                folder='Data/20201023_m63Glu_37C_Sucrose',
                                plot=True)
 
-##errror here figure it out
 experiment9 = model.Experiment(media='M63_Glu',
                                osmolyte='Sucrose',
                                temperature='42',

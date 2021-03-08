@@ -16,8 +16,6 @@ class Experiment:
             plot_title=gg.element_text(face="bold", size=12),
             legend_background=gg.element_rect(
                 fill="white", size=4, colour="white"),
-            # legend.justification = c(0, 1),
-            # legend.position = c(0, 1),
             axis_ticks=gg.element_line(colour="grey", size=0.3),
             panel_grid_major=gg.element_line(colour="grey", size=0.3),
             panel_grid_minor=gg.element_blank(),
@@ -61,7 +59,8 @@ class Experiment:
                                data=analyzed_plate)
             temp_plate.calculate_max_growth_rate()
             temp_plate.subtract_wt()
-            temp_plate.calculate_GFP_by_phase()
+            temp_plate.calculate_gfp_by_phase()
+            temp_plate.calculate_max_od()
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
 
@@ -69,7 +68,6 @@ class Experiment:
         for repeat in self.list_of_repeats:
             repeat.generate_plots()
             repeat.plot_growth_rate()
-
 
     def combine_all_repeats(self):
         all_dfs = []
@@ -99,10 +97,10 @@ class Experiment:
 
             save_string = f"GFPOD_{current_group}.png"
             gg.ggsave(gfp_plot, os.path.join(
-                plot_path, save_string), width=10, height=10, verbose = False)
+                plot_path, save_string), width=10, height=10, verbose=False)
 
-
-        gfp_boxplot = sns.boxplot(x="osmolarity", y="normalised_GFP/OD", saturation=0.9, dodge=False, hue='phase', data=self.experiment_df)
+        gfp_boxplot = sns.boxplot(x="osmolarity", y="normalised_GFP/OD",
+                                  saturation=0.9, dodge=False, hue='phase', data=self.experiment_df)
         for patch in gfp_boxplot.artists:
             r, g, b, a = patch.get_facecolor()
             patch.set_facecolor((r, g, b, .6))
@@ -115,6 +113,23 @@ class Experiment:
 
         figure.savefig(save_path, dpi=400)
         plt.close()
+
+    def plot_max_values(self):
+        plot_path = os.path.join(self.folder, "Experiment_plots")
+        Path(plot_path).mkdir(parents=True, exist_ok=True)
+        for repeat in self.list_of_repeats:
+            fig, max_values_plot = plt.subplots(figsize = (11,7))
+            
+            max_values_plot = sns.scatterplot(
+                x="OD", y="GFP",
+                data=repeat.max_values)        
+            max_values_plot.set(title = repeat.repeat_number, ylabel = 'sfGFP (A.U.)', xlabel = 'OD[600]')
+
+            save_string = f"Max_values_{repeat.repeat_number}_{self.name}.png"
+            save_path = os.path.join(plot_path, save_string)
+
+            fig.savefig(save_path, dpi=400)
+            plt.close()
 
 
 class Plate():
@@ -168,7 +183,7 @@ class Plate():
 
             save_string = f"OD_{current_group}_{self.repeat_number}.png"
             gg.ggsave(OD_group_plot, os.path.join(
-                plot_path, save_string), width=10, height=10, verbose = False)
+                plot_path, save_string), width=10, height=10, verbose=False)
 
         for df in split_df:
             LN_group_plot = (
@@ -179,7 +194,8 @@ class Plate():
                 self.graph_theme
             )
             save_string = f"lnOD_{df['Group'].values[0]}_{self.repeat_number}.png"
-            gg.ggsave(LN_group_plot, os.path.join(plot_path, save_string), verbose = False)
+            gg.ggsave(LN_group_plot, os.path.join(
+                plot_path, save_string), verbose=False)
 
     def calculate_max_growth_rate(self):
 
@@ -217,18 +233,17 @@ class Plate():
                         max_growth_rate['index_GrowthRate'])], 'index_end_exponential': (
                         max_growth_rate['index_GrowthRate'])}
 
-                
                 start_stationary_phase_df = new_df[new_df['Time']
                                                    > end_exponential_phase['end_exponential']]
                 index_start_stationary_phase = start_stationary_phase_df.index[
-                    start_stationary_phase_df['GrowthRate'] < 0.05]
-                
+                    start_stationary_phase_df['GrowthRate'] < 0.02]
+
                 if not index_start_stationary_phase.empty:
                     index_start_stationary_phase = index_start_stationary_phase[0]
                 else:
-                    index_start_stationary_phase = -1 #Here I set the index to the last measurement
-                    #you could debate that this is incorrect as cells mayb not be in stationary phase yet
-                
+                    index_start_stationary_phase = -1  # Here I set the index to the last measurement
+                    # you could debate that this is incorrect as cells mayb not be in stationary phase yet
+
                 if not index_start_stationary_phase == -1:
                     start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
                         index_start_stationary_phase], 'index_start_stationary': index_start_stationary_phase}
@@ -258,10 +273,10 @@ class Plate():
             try:
                 df_mean = df['OD'].values[0:10].mean()
                 df_std = df['OD'].values[0:10].std()
-                std1 = df['Time'][df['OD']>(df_mean +df_std*1)].values[0]
-                std5 = df['Time'][df['OD']>(df_mean + df_std*5)].values[0]
-                std10 = df['Time'][df['OD']>(df_mean + df_std*10)].values[0]
-                std20 = df['Time'][df['OD']>(df_mean + df_std*20)].values[0]
+                std1 = df['Time'][df['OD'] > (df_mean + df_std*1)].values[0]
+                std3 = df['Time'][df['OD'] > (df_mean + df_std*3)].values[0]
+                std5 = df['Time'][df['OD'] > (df_mean + df_std*5)].values[0]
+                std10 = df['Time'][df['OD'] > (df_mean + df_std*10)].values[0]
 
                 current_variable = df['variable'].values[0]
                 gr_plot = (
@@ -270,37 +285,21 @@ class Plate():
                     gg.geom_point() +
                     gg.geom_hline(yintercept=self.max_growth_rate[current_variable]['GrowthRate'], color='black') +
                     gg.geom_vline(xintercept=std1, color='red') +
+                    gg.geom_vline(xintercept=std3, color='red') +
                     gg.geom_vline(xintercept=std5, color='red') +
                     gg.geom_vline(xintercept=std10, color='red') +
-                    gg.geom_vline(xintercept=std20, color='red') +
 
                     gg.geom_vline(xintercept=self.end_exponential_phase[current_variable]['end_exponential'], color='blue') +
                     gg.geom_vline(xintercept=self.start_stationary_phase[current_variable]['start_stationary'], color='green') +
                     gg.ggtitle(current_variable) +
+                    gg.xlim(0, 20) +
                     self.graph_theme
                 )
                 save_string = f"GR_{current_variable}_{self.repeat_number}.png"
-                gg.ggsave(gr_plot, os.path.join(plot_path, save_string), verbose = False)
+                gg.ggsave(gr_plot, os.path.join(
+                    plot_path, save_string), verbose=False)
             except:
-                current_variable = df['variable'].values[0]
-                gr_plot = (
-                    gg.ggplot(df) +
-                    gg.aes(x='Time', y='GrowthRate', color='variable') +
-                    gg.geom_point() +
-                    gg.geom_hline(yintercept=self.max_growth_rate[current_variable]['GrowthRate'], color='black') +
-                    gg.geom_vline(xintercept=std1, color='red') +
-                    gg.geom_vline(xintercept=std5, color='red') +
-                    gg.geom_vline(xintercept=std10, color='red') +
-
-                    gg.geom_vline(xintercept=self.end_exponential_phase[current_variable]['end_exponential'], color='blue') +
-                    gg.geom_vline(xintercept=self.start_stationary_phase[current_variable]['start_stationary'], color='green') +
-                    gg.ggtitle(current_variable) +
-                    self.graph_theme
-                )
-                save_string = f"GR_{current_variable}_{self.repeat_number}.png"
-                gg.ggsave(gr_plot, os.path.join(plot_path, save_string), verbose = False)
-
-        
+                print("error not possible to create plot")
 
     def subtract_wt(self):
         # Now I should split self.data into containing MZ and WT
@@ -328,13 +327,14 @@ class Plate():
                     mz_variable.loc[:, 'wt_variable'] = wt_variable['variable']
                     mz_variable.loc[:, 'wt_GFP'] = wt_variable['GFP']
                     mz_variable.loc[:, 'wt_log(OD)'] = wt_variable['log(OD)']
-                    mz_variable.loc[:, 'wt_GrowthRate'] = wt_variable['GrowthRate']
+                    mz_variable.loc[:,
+                                    'wt_GrowthRate'] = wt_variable['GrowthRate']
                     mz_variable.loc[:, 'wt_Group'] = wt_variable['Group']
                     subtracted_df.append(mz_variable)
                     self.normalized_df = pd.concat(
                         subtracted_df).dropna().reset_index(drop=True)
 
-    def calculate_GFP_by_phase(self):
+    def calculate_gfp_by_phase(self):
         # OK ive set it up so that I can calculate the max growth rate for everything
         # I can calculate GFP/OD which is in the normalized df
         # so now i need to calculate GFP by phase
@@ -349,7 +349,6 @@ class Plate():
                     for x in split.groups]
 
         for df in split_df:
-            
             # calculate exponential phase df
             current_variable = df['variable'].values[0]
 
@@ -381,7 +380,6 @@ class Plate():
                 stationary_phase_approximation = df.iloc[location_start_stationary:]
             GFP_stationary_phase_dict[current_variable] = stationary_phase_approximation
 
-
         self.exponential_phase_df = pd.concat(
             pd.Series(GFP_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
         self.exponential_phase_df.loc[:, 'phase'] = 'Exponential'
@@ -393,3 +391,36 @@ class Plate():
         self.stationary_phase_df.loc[:, 'phase'] = 'Stationary'
         self.complete_df = pd.concat(
             [self.exponential_phase_df, self.post_exponential_phase_df, self.stationary_phase_df]).reset_index(drop=True)
+
+    def calculate_max_od(self):
+
+        split = self.complete_df.groupby('variable')
+        split_df = [split.get_group(x).reset_index(drop=True)
+                    for x in split.groups]
+
+        self.max_od = {}
+        self.max_gfp = {}
+        self.gfp_area_under_curve = {}
+
+        for df in split_df:
+            current_variable = df['variable'].values[0]
+            start_stationary_index = self.start_stationary_phase[current_variable]['start_stationary']
+
+            od_start_stationary = df.loc[df['Time'] >
+                                         start_stationary_index, 'OD'].values[0]
+            gfp_max_value = df['normalised_GFP/OD'].max()
+            gfp_area_under_curve = np.trapz(df['normalised_GFP/OD'], df['Time'], dx=1.0, axis=-1)
+            print(gfp_area_under_curve)
+
+            self.max_od[current_variable] = od_start_stationary
+            self.max_gfp[current_variable] = gfp_max_value
+            self.gfp_area_under_curve[current_variable] = gfp_area_under_curve
+
+        merged_dict = [self.max_od, self.max_gfp, self.gfp_area_under_curve]
+        self.max_values = {}
+        for k in self.max_od.keys():
+            self.max_values[k] = tuple(d[k] for d in merged_dict)
+
+        self.max_values = pd.DataFrame(self.max_values).transpose()
+        self.max_values.columns = ['OD', 'GFP', 'GFP_AUC']
+        self.max_values['repeat'] = self.repeat_number
