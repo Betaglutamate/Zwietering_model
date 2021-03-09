@@ -36,6 +36,7 @@ class Experiment:
         if plot == True:
             self.generate_plots()
             self.plot_gfp()
+            self.plot_max_values()
 
     def clean_data(self):
         files_to_analyze = []
@@ -118,15 +119,22 @@ class Experiment:
         plot_path = os.path.join(self.folder, "Experiment_plots")
         Path(plot_path).mkdir(parents=True, exist_ok=True)
         for repeat in self.list_of_repeats:
-            fig, max_values_plot = plt.subplots(figsize = (11,7))
+            fig, (max_values_plot_gfp, max_values_plot_auc) = plt.subplots(nrows= 2, ncols=1,figsize = (11,7))
             
-            max_values_plot = sns.scatterplot(
+            sns.scatterplot(ax = max_values_plot_gfp,
                 x="OD", y="GFP",
                 data=repeat.max_values)        
-            max_values_plot.set(title = repeat.repeat_number, ylabel = 'sfGFP (A.U.)', xlabel = 'OD[600]')
+            max_values_plot_gfp.set(title = repeat.repeat_number, ylabel = 'sfGFP (A.U.)', xlabel = 'OD[600]')
+
+            sns.scatterplot(ax=max_values_plot_auc,
+                x="OD", y="GFP_AUC",
+                data=repeat.max_values)        
+            max_values_plot_auc.set(title = f"{repeat.repeat_number} Area Under Curve", ylabel = 'sfGFP (AUC)', xlabel = 'OD[600]')
 
             save_string = f"Max_values_{repeat.repeat_number}_{self.name}.png"
             save_path = os.path.join(plot_path, save_string)
+
+            plt.tight_layout()
 
             fig.savefig(save_path, dpi=400)
             plt.close()
@@ -410,7 +418,6 @@ class Plate():
                                          start_stationary_index, 'OD'].values[0]
             gfp_max_value = df['normalised_GFP/OD'].max()
             gfp_area_under_curve = np.trapz(df['normalised_GFP/OD'], df['Time'], dx=1.0, axis=-1)
-            print(gfp_area_under_curve)
 
             self.max_od[current_variable] = od_start_stationary
             self.max_gfp[current_variable] = gfp_max_value
