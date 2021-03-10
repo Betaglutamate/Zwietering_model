@@ -23,9 +23,9 @@ class Experiment:
         )
     )
 
-    def __init__(self, media, osmolyte, temperature, date, folder, plot=False):
+    def __init__(self, media, solute, temperature, date, folder, plot=False):
         self.name = media
-        self.osmolyte = osmolyte
+        self.solute = solute
         self.temperature = temperature
         self.date = date
         self.folder = folder
@@ -52,7 +52,7 @@ class Experiment:
             filepath = os.path.join(repeat['root'], repeat['filename'])
             analyzed_plate = af.analyze_plate(filepath)
             temp_plate = Plate(media=self.name,
-                               osmolyte=self.osmolyte,
+                               solute=self.solute,
                                temperature=self.temperature,
                                date=self.date,
                                folder=self.folder,
@@ -62,6 +62,7 @@ class Experiment:
             temp_plate.subtract_wt()
             temp_plate.calculate_gfp_by_phase()
             temp_plate.calculate_max_od()
+            temp_plate.add_max_values_to_df()
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
 
@@ -142,10 +143,10 @@ class Experiment:
 
 class Plate():
 
-    def __init__(self, media, osmolyte, temperature, date, folder, repeat_number, data):
+    def __init__(self, media, solute, temperature, date, folder, repeat_number, data):
 
         self.name = media
-        self.osmolyte = osmolyte
+        self.solute = solute
         self.temperature = temperature
         self.date = date
         self.folder = folder
@@ -439,3 +440,22 @@ class Plate():
         self.max_values = pd.DataFrame(self.max_values).transpose()
         self.max_values.columns = ['OD', 'GFP', 'GFP_AUC']
         self.max_values['repeat'] = self.repeat_number
+    
+    def add_max_values_to_df(self):
+        '''
+        Here I add all the max values to the dataframe to make it easier to plot later on
+        '''
+        # Here is the max growth rate
+        self.complete_df['MZ1_max_growth_rate'] = self.complete_df['variable']
+        self.complete_df['MZ1_max_growth_rate'] = self.complete_df['MZ1_max_growth_rate'].map(self.max_growth_rate)
+        self.complete_df['MZ1_max_growth_rate'] = [d.get('GrowthRate') for d in self.complete_df.MZ1_max_growth_rate]
+
+        self.complete_df['wt_max_growth_rate'] = self.complete_df['wt_variable']
+        self.complete_df['wt_max_growth_rate'] = self.complete_df['wt_max_growth_rate'].map(self.max_growth_rate)
+        self.complete_df['wt_max_growth_rate'] = [d.get('GrowthRate') for d in self.complete_df.wt_max_growth_rate]
+
+        # here is the max GFP This is the normalised GFP and thus has values for MZ1 only
+
+        self.complete_df['MZ1_max_gfp'] = self.complete_df['variable']
+        self.complete_df['MZ1_max_gfp'] = self.complete_df['MZ1_max_gfp'].map(self.max_gfp)
+

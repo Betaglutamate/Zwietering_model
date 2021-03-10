@@ -1,172 +1,52 @@
-import model
 import warnings
+import run_experiments_functions as re
 from concurrent.futures import ProcessPoolExecutor
 import pickle
 import datetime
+
+experiment1 = re.run_experiment1()
+
+df = experiment1.list_of_repeats[0].complete_df
+dictionary = experiment1.list_of_repeats[0].max_gfp
+
+df['MZ1_max_growth_rate'] = df['variable']
+df['MZ1_max_growth_rate'] = df['MZ1_max_growth_rate'].map(dictionary)
+df['MZ1_max_growth_rate'] = [d.get('GrowthRate') for d in df.MZ1_max_growth_rate]
+
+df['wt_max_growth_rate'] = df['wt_variable']
+df['wt_max_growth_rate'] = df['wt_max_growth_rate'].map(dictionary)
+df['wt_max_growth_rate'] = [d.get('GrowthRate') for d in df.wt_max_growth_rate]
+
+
 warnings.filterwarnings("ignore")
 
 
-def run_experiment1():
-    experiment1 = model.Experiment(media='M63_Gly',
-                               osmolyte='Sucrose',
-                               temperature='37',
-                               date='2020-09-10',
-                               folder='Data/20200910_m63gly_37c_Sucrose',
-                               plot=True)
-    return experiment1
-
-
-def run_experiment2():
-    experiment2 = model.Experiment(media='M63_Glu_CAA',
-                               osmolyte='Sucrose',
-                               temperature='30',
-                               date='2020-09-29',
-                               folder='Data/20200929_m63GluCAA_30c_Sucrose',
-                               plot=True)
-    return experiment2
-
-def run_experiment3():
-    experiment3 = model.Experiment(media='M63_Glu_CAA',
-                               osmolyte='Sucrose',
-                               temperature='37',
-                               date='2020-10-02',
-                               folder='Data/20201002_m63GluCAA_37C_Sucrose',
-                               plot=True)
-    return experiment3
-
-
-def run_experiment4():
-    experiment4 = model.Experiment(media='M63_Gly_Betaine',
-                                osmolyte='Sucrose',
-                                temperature='37',
-                                date='2020-10-06',
-                                folder='Data/20201006_m63Gly_Betaine_37C_Sucrose',
-                                plot=True)
-    return experiment4
-
-def run_experiment5():
-    experiment5 = model.Experiment(media='M63_Glu_CAA_Betaine',
-                                osmolyte='Sucrose',
-                                temperature='37',
-                                date='2020-10-09',
-                                folder='Data/20201009_m63GluCAA_Betaine_37C_Sucrose',
-                                plot=True)
-    return experiment5
-
-def run_experiment6():
-    experiment6 = model.Experiment(media='M63_Glu_CAA',
-                                osmolyte='NaCl',
-                                temperature='37',
-                                date='2020-10-13',
-                                folder='Data/20201013_m63GluCAA_37C_NaCl',
-                                plot=True)
-    return experiment6
-
-def run_experiment7():
-    experiment7 = model.Experiment(media='M63_Glu_CAA_Betaine',
-                                osmolyte='NaCl',
-                                temperature='37',
-                                date='2020-10-19',
-                                folder='Data/20201019_m63GluCAA_Betaine_37C_NaCl',
-                                plot=True)
-    return experiment7
-
-def run_experiment8():
-    experiment8 = model.Experiment(media='M63_Glu',
-                                osmolyte='Sucrose',
-                                temperature='37',
-                                date='2020-10-23',
-                                folder='Data/20201023_m63Glu_37C_Sucrose',
-                                plot=True)
-    return experiment8
-
-def run_experiment9():
-    experiment9 = model.Experiment(media='M63_Glu',
-                               osmolyte='Sucrose',
-                               temperature='42',
-                               date='2020-10-27',
-                               folder='Data/20201027_m63Glu_42C_Sucrose',
-                               plot=True)
-    return experiment9
-
-def run_experiment10():
-    experiment10 = model.Experiment(media='M63_Man',
-                                osmolyte='Sucrose',
-                                temperature='37',
-                                date='2020-10-27',
-                                folder='Data/20201030_m63Man_37C_Sucrose',
-                                plot=True)
-    return experiment10
-
-def run_experiment11():
-    experiment11 = model.Experiment(media='RDM',
-                                osmolyte='Sucrose',
-                                temperature='37',
-                                date='2020-12-04',
-                                folder='Data/20201204_RDM_37C_Sucrose',
-                                plot=True)
-    return experiment11
-
-def run_experiment12():
-    experiment12 = model.Experiment(media='M63_Gly',
-                                osmolyte='NaCl',
-                                temperature='37',
-                                date='2021-01-19',
-                                folder='Data/20210119_m63Gly_37C_NaCl',
-                                plot=True)
-    return experiment12
-
-def run_experiment13():
-    experiment13 = model.Experiment(media='M63_Gly_Betaine',
-                                osmolyte='NaCl',
-                                temperature='37',
-                                date='2021-01-25',
-                                folder='Data/20210125_m63Gly_Betaine_37C_NaCl',
-                                plot=True)
-    return experiment13
-
-def run_experiment14():
-    experiment14 = model.Experiment(media='M63_Gly',
-                                osmolyte='NaCl',
-                                temperature='37',
-                                date='2021-02-10',
-                                folder='Data/20210202_m63Gly_37C_NaCl',
-                                plot=True)
-    return experiment14
-
-def run_experiment15():
-    experiment15 = model.Experiment(media='M63_Glu',
-                                osmolyte='NaCl',
-                                temperature='37',
-                                date='2021-02-16',
-                                folder='Data/20210216_m63Glu_37C_NaCl',
-                                plot=True)
-    return experiment15
-
-list_test = []
+with ProcessPoolExecutor(max_workers=3) as executor:
+    experiment1 = executor.submit(re.run_experiment1)
+    experiment2 = executor.submit(re.run_experiment2)
+    experiment3 = executor.submit(re.run_experiment3)
+    experiment4 = executor.submit(re.run_experiment4)
+    experiment5 = executor.submit(re.run_experiment5)
+    experiment6 = executor.submit(re.run_experiment6)
 
 with ProcessPoolExecutor(max_workers=3) as executor:
-    experiment1 = executor.submit(run_experiment1)
-    experiment2 = executor.submit(run_experiment2)
-    experiment3 = executor.submit(run_experiment3)
-    experiment4 = executor.submit(run_experiment4)
-    experiment5 = executor.submit(run_experiment5)
-    experiment6 = executor.submit(run_experiment6)
-
-with ProcessPoolExecutor(max_workers=3) as executor:
-    experiment7 = executor.submit(run_experiment7)
-    experiment8 = executor.submit(run_experiment8)
-    experiment9 = executor.submit(run_experiment9)
-    experiment10 = executor.submit(run_experiment10)
-    experiment11 = executor.submit(run_experiment11)
-    experiment12 = executor.submit(run_experiment12)
+    experiment7 = executor.submit(re.run_experiment7)
+    experiment8 = executor.submit(re.run_experiment8)
+    experiment9 = executor.submit(re.run_experiment9)
+    experiment10 = executor.submit(re.run_experiment10)
+    experiment11 = executor.submit(re.run_experiment11)
+    experiment12 = executor.submit(re.run_experiment12)
 
 with ProcessPoolExecutor(max_workers=3) as executor:
 
-    experiment13 = executor.submit(run_experiment13)
-    experiment14 = executor.submit(run_experiment14)
-    experiment15 = executor.submit(run_experiment15)
+    experiment13 = executor.submit(re.run_experiment13)
+    experiment14 = executor.submit(re.run_experiment14)
+    experiment15 = executor.submit(re.run_experiment15)
+    experiment15 = executor.submit(re.run_experiment15)
+    experiment16 = executor.submit(re.run_experiment16)
 
+
+experiment16= re.run_experiment16()
 print("finished analysis")
 
 experiment_summary = [
@@ -185,16 +65,18 @@ experiment_summary = [
     experiment13.result(),
     experiment14.result(),
     experiment15.result(),
-]
-    
+    experiment16.result()
+]    
+
 
 pickle.dump(experiment_summary, open( f"experiments_{str(datetime.date.today())}.p", "wb" ) )
+
 
 # pickle.load(open("save.p", "rb" ) )
 
 
 # experiment3 = model.Experiment(media='M63_Glu',
-#                                osmolyte='NaCl',
+#                                solute='NaCl',
 #                                temperature='37',
 #                                date='2021-02-28',
 #                                folder='Data/20210216_m63Glu_NaCl',
