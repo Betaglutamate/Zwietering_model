@@ -1,9 +1,9 @@
 import model
 import warnings
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 import pickle
 import datetime
-# warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 
 def run_experiment1():
@@ -143,32 +143,52 @@ def run_experiment15():
                                 plot=True)
     return experiment15
 
+list_test = []
 
-with ThreadPoolExecutor(max_workers=2) as executor:
+with ProcessPoolExecutor(max_workers=3) as executor:
     experiment1 = executor.submit(run_experiment1)
     experiment2 = executor.submit(run_experiment2)
     experiment3 = executor.submit(run_experiment3)
     experiment4 = executor.submit(run_experiment4)
     experiment5 = executor.submit(run_experiment5)
     experiment6 = executor.submit(run_experiment6)
+
+with ProcessPoolExecutor(max_workers=3) as executor:
     experiment7 = executor.submit(run_experiment7)
     experiment8 = executor.submit(run_experiment8)
     experiment9 = executor.submit(run_experiment9)
     experiment10 = executor.submit(run_experiment10)
     experiment11 = executor.submit(run_experiment11)
     experiment12 = executor.submit(run_experiment12)
+
+with ProcessPoolExecutor(max_workers=3) as executor:
+
     experiment13 = executor.submit(run_experiment13)
     experiment14 = executor.submit(run_experiment14)
     experiment15 = executor.submit(run_experiment15)
 
+print("finished analysis")
 
-for future in list_of_all_experiments:
-    result = future.result()
-    print(result)
+experiment_summary = [
+    experiment1.result(),
+    experiment2.result(),
+    experiment3.result(),
+    experiment4.result(),
+    experiment5.result(),
+    experiment6.result(),
+    experiment7.result(),
+    experiment8.result(),
+    experiment9.result(),
+    experiment10.result(),
+    experiment11.result(),
+    experiment12.result(),
+    experiment13.result(),
+    experiment14.result(),
+    experiment15.result(),
+]
+    
 
-
-
-# pickle.dump(list_of_all_experiments, open( f"experiments_{str(datetime.date.today())}.p", "wb" ) )
+pickle.dump(experiment_summary, open( f"experiments_{str(datetime.date.today())}.p", "wb" ) )
 
 # pickle.load(open("save.p", "rb" ) )
 

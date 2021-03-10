@@ -257,7 +257,7 @@ class Plate():
                         index_start_stationary_phase], 'index_start_stationary': index_start_stationary_phase}
                 if index_start_stationary_phase == -1:
                     start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
-                        index_start_stationary_phase:], 'index_start_stationary': index_start_stationary_phase}
+                        index_start_stationary_phase:].values[0], 'index_start_stationary': index_start_stationary_phase}
 
             max_growth_rate_dict[current_variable] = max_growth_rate
             end_exponential_phase_dict[current_variable] = end_exponential_phase
@@ -413,9 +413,17 @@ class Plate():
         for df in split_df:
             current_variable = df['variable'].values[0]
             start_stationary_index = self.start_stationary_phase[current_variable]['start_stationary']
+            
+            try:
+                od_start_stationary = df.loc[df['Time'] >=
+                                            start_stationary_index, 'OD'].values[0]
+            except:
+                '''
+                Here I catch the error that there is no start of the stationary phase.
+                This means that the OD will eb undervalued.
+                '''
+                od_start_stationary = df.iloc[-1]['OD']
 
-            od_start_stationary = df.loc[df['Time'] >
-                                         start_stationary_index, 'OD'].values[0]
             gfp_max_value = df['normalised_GFP/OD'].max()
             gfp_area_under_curve = np.trapz(df['normalised_GFP/OD'], df['Time'], dx=1.0, axis=-1)
 
