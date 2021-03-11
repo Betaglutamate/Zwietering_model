@@ -60,8 +60,10 @@ class Experiment:
                                data=analyzed_plate)
             temp_plate.calculate_max_growth_rate()
             temp_plate.subtract_wt()
-            temp_plate.calculate_gfp_by_phase()
-            temp_plate.calculate_max_od()
+            temp_plate.calculate_gfp_by_phase_mz1()
+            temp_plate.calculate_gfp_by_phase_wt()
+            temp_plate.calculate_max_od_mz1()
+            temp_plate.calculate_max_od_wt()
             temp_plate.add_max_values_to_df()
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
@@ -84,7 +86,11 @@ class Experiment:
 
         plot_path = os.path.join(self.folder, "Experiment_plots")
         Path(plot_path).mkdir(parents=True, exist_ok=True)
-        split = self.experiment_df.groupby(['Group'])
+
+        gfp_df = self.experiment_df
+
+        gfp_df = gfp_df[gfp_df['mz1_phase'] != 'Lag']
+        split = gfp_df.groupby(['Group'])
         split_df = [split.get_group(x) for x in split.groups]
 
         for df in split_df:
@@ -102,7 +108,7 @@ class Experiment:
                 plot_path, save_string), width=10, height=10, verbose=False)
 
         gfp_boxplot = sns.boxplot(x="osmolarity", y="normalised_GFP/OD",
-                                  saturation=0.9, dodge=False, hue='phase', data=self.experiment_df)
+                                  saturation=0.9, dodge=False, hue='mz1_phase', data=gfp_df)
         for patch in gfp_boxplot.artists:
             r, g, b, a = patch.get_facecolor()
             patch.set_facecolor((r, g, b, .6))
@@ -182,7 +188,7 @@ class Plate():
 
         for df in split_df:
             current_group = df['Group'].values[0]
-            OD_group_plot = (
+            od_group_plot = (
                 gg.ggplot(df) +
                 gg.aes(x='Time', y='OD', color='variable') +
                 gg.geom_point() +
@@ -191,7 +197,7 @@ class Plate():
             )
 
             save_string = f"OD_{current_group}_{self.repeat_number}.png"
-            gg.ggsave(OD_group_plot, os.path.join(
+            gg.ggsave(od_group_plot, os.path.join(
                 plot_path, save_string), width=10, height=10, verbose=False)
 
         for df in split_df:
@@ -343,15 +349,16 @@ class Plate():
                     self.normalized_df = pd.concat(
                         subtracted_df).dropna().reset_index(drop=True)
 
-    def calculate_gfp_by_phase(self):
+    def calculate_gfp_by_phase_mz1(self):
         # OK ive set it up so that I can calculate the max growth rate for everything
         # I can calculate GFP/OD which is in the normalized df
         # so now i need to calculate GFP by phase
         # exponential phase will be from timepoint of the max Growth rate to end of exponential
         # take all the datapoints and make a boxplot
-        GFP_exponential_phase_dict = {}
-        GFP_post_exponential_phase_dict = {}
-        GFP_stationary_phase_dict = {}
+        gfp_lag_phase_dict = {}
+        gfp_exponential_phase_dict = {}
+        gfp_post_exponential_phase_dict = {}
+        gfp_stationary_phase_dict = {}
 
         split = self.normalized_df.groupby('variable')
         split_df = [split.get_group(x).reset_index(drop=True)
@@ -365,10 +372,13 @@ class Plate():
         # Now calculate + and - 4 of that location
             if np.isnan(location_max_growth):
                 exponential_phase_approximation = np.nan
+                lag_phase_estimation = df
             else:
                 exponential_phase_approximation = df.iloc[(
                     location_max_growth-4):(location_max_growth+4)]
-            GFP_exponential_phase_dict[current_variable] = exponential_phase_approximation
+                lag_phase_estimation = df.iloc[:location_max_growth-4]
+            gfp_exponential_phase_dict[current_variable] = exponential_phase_approximation
+            gfp_lag_phase_dict[current_variable] = lag_phase_estimation
 
             # calculate post exponential phase df
             # Here I take max growth + 5 because then when I join the dataframe together I am not dropping any data
@@ -380,34 +390,103 @@ class Plate():
                     current_variable]['index_start_stationary']
                 post_exponential_phase_approximation = df.iloc[
                     location_end_exponential:location_start_stationary]
-            GFP_post_exponential_phase_dict[current_variable] = post_exponential_phase_approximation
+            gfp_post_exponential_phase_dict[current_variable] = post_exponential_phase_approximation
 
             # calculate stationary phase GFP
             if np.isnan(location_max_growth):
                 stationary_phase_approximation = np.nan
             else:
                 stationary_phase_approximation = df.iloc[location_start_stationary:]
-            GFP_stationary_phase_dict[current_variable] = stationary_phase_approximation
+            gfp_stationary_phase_dict[current_variable] = stationary_phase_approximation
 
+        self.lag_phase_df = pd.concat(
+            pd.Series(gfp_lag_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.lag_phase_df.loc[:, 'mz1_phase'] = 'Lag'
         self.exponential_phase_df = pd.concat(
-            pd.Series(GFP_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
-        self.exponential_phase_df.loc[:, 'phase'] = 'Exponential'
+            pd.Series(gfp_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.exponential_phase_df.loc[:, 'mz1_phase'] = 'Exponential'
         self.post_exponential_phase_df = pd.concat(
-            pd.Series(GFP_post_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
-        self.post_exponential_phase_df.loc[:, 'phase'] = 'Post-exponential'
+            pd.Series(gfp_post_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.post_exponential_phase_df.loc[:, 'mz1_phase'] = 'Post-exponential'
         self.stationary_phase_df = pd.concat(
-            pd.Series(GFP_stationary_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
-        self.stationary_phase_df.loc[:, 'phase'] = 'Stationary'
-        self.complete_df = pd.concat(
-            [self.exponential_phase_df, self.post_exponential_phase_df, self.stationary_phase_df]).reset_index(drop=True)
+            pd.Series(gfp_stationary_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.stationary_phase_df.loc[:, 'mz1_phase'] = 'Stationary'
+        self.normalized_df_pre_wt_phase = pd.concat(
+            [self.lag_phase_df, self.exponential_phase_df, self.post_exponential_phase_df, self.stationary_phase_df]).reset_index(drop=True)
 
-    def calculate_max_od(self):
+    def calculate_gfp_by_phase_wt(self):
+        # OK ive set it up so that I can calculate the max growth rate for everything
+        # I can calculate GFP/OD which is in the normalized df
+        # so now i need to calculate GFP by phase
+        # exponential phase will be from timepoint of the max Growth rate to end of exponential
+        # take all the datapoints and make a boxplot
+        wt_lag_phase_dict = {}
+        wt_exponential_phase_dict = {}
+        wt_post_exponential_phase_dict = {}
+        wt_stationary_phase_dict = {}
+
+        split = self.normalized_df_pre_wt_phase.groupby('wt_variable')
+        split_df = [split.get_group(x).reset_index(drop=True)
+                    for x in split.groups]
+
+        for df in split_df:
+            # calculate exponential phase df
+            current_variable = df['wt_variable'].values[0]
+            location_max_growth = self.max_growth_rate[current_variable]['index_GrowthRate']
+        # Now calculate + and - 4 of that location
+            if np.isnan(location_max_growth):
+                exponential_phase_approximation = np.nan
+                lag_phase_estimation = df
+            else:
+                exponential_phase_approximation = df.iloc[(
+                    location_max_growth-4):(location_max_growth+4)]
+                lag_phase_estimation = df.iloc[:location_max_growth-4]
+
+            wt_exponential_phase_dict[current_variable] = exponential_phase_approximation
+            wt_lag_phase_dict[current_variable] = lag_phase_estimation
+
+
+            # calculate post exponential phase df
+            # Here I take max growth + 5 because then when I join the dataframe together I am not dropping any data
+            if np.isnan(location_max_growth):
+                post_exponential_phase_approximation = np.nan
+            else:
+                location_end_exponential = location_max_growth+5
+                location_start_stationary = self.start_stationary_phase[
+                    current_variable]['index_start_stationary']
+                post_exponential_phase_approximation = df.iloc[
+                    location_end_exponential:location_start_stationary]
+            wt_post_exponential_phase_dict[current_variable] = post_exponential_phase_approximation
+
+            # calculate stationary phase wt
+            if np.isnan(location_max_growth):
+                stationary_phase_approximation = np.nan
+            else:
+                stationary_phase_approximation = df.iloc[location_start_stationary:]
+            wt_stationary_phase_dict[current_variable] = stationary_phase_approximation
+
+        self.lag_phase_df = pd.concat(
+            pd.Series(wt_lag_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.lag_phase_df.loc[:, 'wt_phase'] = 'Lag'
+        self.exponential_phase_df_wt = pd.concat(
+            pd.Series(wt_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.exponential_phase_df_wt.loc[:, 'wt_phase'] = 'Exponential'
+        self.post_exponential_phase_df_wt = pd.concat(
+            pd.Series(wt_post_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.post_exponential_phase_df_wt.loc[:, 'wt_phase'] = 'Post-exponential'
+        self.stationary_phase_df_wt = pd.concat(
+            pd.Series(wt_stationary_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        self.stationary_phase_df_wt.loc[:, 'wt_phase'] = 'Stationary'
+        self.complete_df = pd.concat(
+            [self.lag_phase_df, self.exponential_phase_df_wt, self.post_exponential_phase_df_wt, self.stationary_phase_df_wt]).reset_index(drop=True)
+
+    def calculate_max_od_mz1(self):
 
         split = self.complete_df.groupby('variable')
         split_df = [split.get_group(x).reset_index(drop=True)
                     for x in split.groups]
 
-        self.max_od = {}
+        self.max_od_mz1 = {}
         self.max_gfp = {}
         self.gfp_area_under_curve = {}
 
@@ -428,13 +507,53 @@ class Plate():
             gfp_max_value = df['normalised_GFP/OD'].max()
             gfp_area_under_curve = np.trapz(df['normalised_GFP/OD'], df['Time'], dx=1.0, axis=-1)
 
-            self.max_od[current_variable] = od_start_stationary
+            self.max_od_mz1[current_variable] = od_start_stationary
             self.max_gfp[current_variable] = gfp_max_value
             self.gfp_area_under_curve[current_variable] = gfp_area_under_curve
 
-        merged_dict = [self.max_od, self.max_gfp, self.gfp_area_under_curve]
+        merged_dict = [self.max_od_mz1, self.max_gfp, self.gfp_area_under_curve]
         self.max_values = {}
-        for k in self.max_od.keys():
+        for k in self.max_od_mz1.keys():
+            self.max_values[k] = tuple(d[k] for d in merged_dict)
+
+        self.max_values = pd.DataFrame(self.max_values).transpose()
+        self.max_values.columns = ['OD', 'GFP', 'GFP_AUC']
+        self.max_values['repeat'] = self.repeat_number
+
+    def calculate_max_od_wt(self):
+
+        split = self.complete_df.groupby('wt_variable')
+        split_df = [split.get_group(x).reset_index(drop=True)
+                    for x in split.groups]
+
+        self.max_od_wt = {}
+        self.max_gfp_wt = {}
+        self.gfp_area_under_curve_wt = {}
+
+        for df in split_df:
+            current_variable = df['wt_variable'].values[0]
+            start_stationary_index = self.start_stationary_phase[current_variable]['start_stationary']
+            
+            try:
+                od_start_stationary = df.loc[df['Time'] >=
+                                            start_stationary_index, 'OD'].values[0]
+            except:
+                '''
+                Here I catch the error that there is no start of the stationary phase.
+                This means that the OD will eb undervalued.
+                '''
+                od_start_stationary = df.iloc[-1]['OD']
+
+            gfp_max_value = df['normalised_GFP/OD'].max()
+            gfp_area_under_curve_wt = np.trapz(df['normalised_GFP/OD'], df['Time'], dx=1.0, axis=-1)
+
+            self.max_od_wt[current_variable] = od_start_stationary
+            self.max_gfp_wt[current_variable] = gfp_max_value
+            self.gfp_area_under_curve_wt[current_variable] = gfp_area_under_curve_wt
+
+        merged_dict = [self.max_od_wt, self.max_gfp_wt, self.gfp_area_under_curve_wt]
+        self.max_values = {}
+        for k in self.max_od_wt.keys():
             self.max_values[k] = tuple(d[k] for d in merged_dict)
 
         self.max_values = pd.DataFrame(self.max_values).transpose()
@@ -455,7 +574,11 @@ class Plate():
         self.complete_df['wt_max_growth_rate'] = [d.get('GrowthRate') for d in self.complete_df.wt_max_growth_rate]
 
         # here is the max GFP This is the normalised GFP and thus has values for MZ1 only
-
         self.complete_df['MZ1_max_gfp'] = self.complete_df['variable']
         self.complete_df['MZ1_max_gfp'] = self.complete_df['MZ1_max_gfp'].map(self.max_gfp)
 
+        # here is the max OD
+        self.complete_df['MZ1_max_od'] = self.complete_df['variable']
+        self.complete_df['MZ1_max_od'] = self.complete_df['MZ1_max_od'].map(self.max_od_mz1)
+        self.complete_df['wt_max_od'] = self.complete_df['wt_variable']
+        self.complete_df['wt_max_od'] = self.complete_df['wt_max_od'].map(self.max_od_wt)

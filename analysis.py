@@ -4,22 +4,8 @@ from concurrent.futures import ProcessPoolExecutor
 import pickle
 import datetime
 
-experiment1 = re.run_experiment1()
-
-df = experiment1.list_of_repeats[0].complete_df
-dictionary = experiment1.list_of_repeats[0].max_gfp
-
-df['MZ1_max_growth_rate'] = df['variable']
-df['MZ1_max_growth_rate'] = df['MZ1_max_growth_rate'].map(dictionary)
-df['MZ1_max_growth_rate'] = [d.get('GrowthRate') for d in df.MZ1_max_growth_rate]
-
-df['wt_max_growth_rate'] = df['wt_variable']
-df['wt_max_growth_rate'] = df['wt_max_growth_rate'].map(dictionary)
-df['wt_max_growth_rate'] = [d.get('GrowthRate') for d in df.wt_max_growth_rate]
-
-
 warnings.filterwarnings("ignore")
-
+experiment1 = re.run_experiment1()
 
 with ProcessPoolExecutor(max_workers=3) as executor:
     experiment1 = executor.submit(re.run_experiment1)

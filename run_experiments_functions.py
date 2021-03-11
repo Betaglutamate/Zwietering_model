@@ -6,7 +6,7 @@ def run_experiment1():
                                temperature='37',
                                date='2020-09-10',
                                folder='Data/20200910_m63gly_37c_Sucrose',
-                               plot=False)
+                               plot=True)
     return experiment1
 
 
