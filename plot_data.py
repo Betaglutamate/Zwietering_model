@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-all_experiments = pickle.load(open("experiments_2021-03-11.p", "rb" ) )
+all_experiments = pickle.load(open("experiments_2021-03-12.p", "rb" ) )
 
 all_experiments_dataframe = []
 
@@ -12,12 +12,20 @@ for experiment in all_experiments:
     experiment.experiment_df['experiment'] = '_'.join([experiment.name, experiment.solute])
     all_experiments_dataframe.append(experiment.experiment_df)
 
+final_df = pd.concat(all_experiments_dataframe).reset_index(drop=True)
+
+from rpy2 import robjects
+from rpy2.robjects import pandas2ri
+pandas2ri.activate()
+
+r_data = pandas2ri.py2rpy_pandasdataframe(final_df)
+robjects.r.assign("df", r_data)
+robjects.r("save(df, file='test.rda')")
+
 
 for experiment in all_experiments:
     sns.scatterplot(x = "osmolarity", y = "GrowthRate", hue='experiment', data = nacl_final_df)        
 
-
-final_df = pd.concat(all_experiments_dataframe).reset_index(drop=True)
 
 #Sucrose containing df
 sucrose_final_df = final_df[final_df['experiment'].str.contains('Sucrose', regex=False)]
