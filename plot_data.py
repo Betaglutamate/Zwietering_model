@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-all_experiments = pickle.load(open("experiments_2021-03-10.p", "rb" ) )
+all_experiments = pickle.load(open("experiments_2021-03-11.p", "rb" ) )
 
 all_experiments_dataframe = []
 
@@ -35,9 +35,25 @@ Things I need to do.
 
 
 
-fig, ax  = plt.subplots(figsize = (11,7))
+
+test = nacl_final_df.drop_duplicates(['MZ1_max_growth_rate'])
+
+
+fig, ax1  = plt.subplots(figsize = (11,7))
            
-sns.scatterplot(ax = ax, x = "osmolarity", y = "GrowthRate", hue='experiment', data = nacl_final_df)        
-ax.set(title = "Osmolarity vs Growth Rate NaCl", ylabel = 'GrowthRate', xlabel = 'Osmolarity')
+sns.scatterplot(ax = ax1, x = "osmolarity", y = "GrowthRate", hue='experiment', data = test)        
+ax1.set(title = "Osmolarity vs Growth Rate NaCl", ylabel = 'GrowthRate', xlabel = 'Osmolarity')
+
+plt.close()
 
 
+test = nacl_final_df.drop_duplicates(['MZ1_max_growth_rate'])
+
+
+fig, ax1  = plt.subplots(figsize = (11,7))
+           
+sns.scatterplot(ax = ax1, x = "osmolarity", y = "MZ1_max_growth_rate", hue='experiment', data = test)        
+ax1.set(title = "Osmolarity vs Growth Rate NaCl", ylabel = 'GrowthRate', xlabel = 'Osmolarity')
+
+
+plt.close()
