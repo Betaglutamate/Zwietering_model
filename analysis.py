@@ -3,10 +3,9 @@ import run_experiments_functions as re
 from concurrent.futures import ProcessPoolExecutor
 import pickle
 import datetime
-
-
 warnings.filterwarnings("ignore")
-# experiment1 = re.run_experiment1()
+import pandas as pd
+
 
 if __name__ == '__main__':
 
@@ -52,6 +51,18 @@ if __name__ == '__main__':
 
 
     pickle.dump(experiment_summary, open( f"experiments_{str(datetime.date.today())}.p", "wb" ) )
+    
+    all_experiments_dataframe = []
+    for experiment in experiment_summary:
+        experiment.experiment_df['experiment'] = '_'.join([experiment.name, experiment.solute, f'{experiment.temperature}C'])
+        all_experiments_dataframe.append(experiment.experiment_df)
+
+    final_df = pd.concat(all_experiments_dataframe).reset_index(drop=True)
+    final_df.to_csv('final_df.csv')
+
+
+    print("final df saved")
+
 
 
 # pickle.load(open("save.p", "rb" ) )

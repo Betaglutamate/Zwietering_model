@@ -1,0 +1,428 @@
+---
+title: "Analysis of Otsb Experiments"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, fig.width=14,fig.height=8)
+```
+
+```{r load_dependencies}
+
+library(tidyverse)
+library(stringr)
+
+```
+
+```{r load_dataframe}
+
+final_df <- read.csv('D:/Github/PlatereaderAnalysisPython/final_df.csv')
+
+final_df_unique <- 
+  final_df %>%
+  distinct(experiment,repeat.,variable, .keep_all = TRUE)
+
+
+```
+
+```{r set_graph_settings}
+
+graph_theme <- 
+  theme_bw() + 
+  theme(
+    plot.title = element_text(face = "bold", size = 24, hjust = 0.5),
+    legend.background = element_rect(fill = "white", size = 4, colour = "white"),
+    # legend.justification = c(0, 1),
+    # legend.position = c(0, 1),
+    axis.ticks = element_line(colour = "grey70", size = 0.3),
+    panel.grid.major = element_line(colour = "grey70", size = 0.3),
+    panel.grid.minor = element_blank(),
+    text=element_text(size=20)
+  )
+
+# Colors 
+glucose_red <- "#da5552"
+glycerol_green <- "#40916c"
+mannose_blue <- "#0077b6"
+gray_30 <- "darkgray"
+black_42 <- "black"
+protein_fill <- "#ffb5a7"
+RDM_Purple <- "#7b2cbf"
+
+#shapes
+nacl_square <- 22
+nacl_betaine <- 24
+sucrose_diamond <- 23
+sucrose_betaine <-24
+RDM_triangle <- 25
+
+#Size
+shape_size <- 3
+stroke_size <- 1.2
+
+
+
+#styling
+graph_color_scale <-
+scale_color_manual(
+  breaks = c('M63_Gly_Sucrose_37C', #1
+             'M63_Glu_CAA_Sucrose_30C', #2
+             'M63_Glu_CAA_Sucrose_37C', #3
+             'M63_Gly_Betaine_Sucrose_37C', #4
+             'M63_Glu_CAA_Betaine_Sucrose_37C', #5
+             'M63_Glu_CAA_NaCl_37C', #6
+             'M63_Glu_CAA_Betaine_NaCl_37C', #7
+             'M63_Glu_Sucrose_37C', #8
+             'M63_Glu_Sucrose_42C', #9
+             'M63_Man_Sucrose_37C', #10
+             'RDM_Sucrose_37C', #11
+             'M63_Gly_NaCl_37C', #12
+             'M63_Gly_Betaine_NaCl_37C', #13
+             'M63_Glu_NaCl_37C', #14
+             'M63_Glu_Betaine_NaCl_37C' #15
+             ),
+  values=c(glycerol_green, #1
+           gray_30, #2
+           glucose_red, #3
+           glycerol_green, #4
+           glucose_red, #5
+           glucose_red, #6
+           glucose_red, #7
+           glucose_red, #8
+           black_42, #9
+           mannose_blue, #10
+           RDM_Purple, #11
+           glycerol_green, #12
+           glycerol_green, #13
+           glucose_red, #14
+           glucose_red #15
+           )
+)
+
+
+graph_fill_scale <-
+scale_fill_manual(
+  breaks = c('M63_Gly_Sucrose_37C', #1
+             'M63_Glu_CAA_Sucrose_30C', #2
+             'M63_Glu_CAA_Sucrose_37C', #3
+             'M63_Gly_Betaine_Sucrose_37C', #4
+             'M63_Glu_CAA_Betaine_Sucrose_37C', #5
+             'M63_Glu_CAA_NaCl_37C', #6
+             'M63_Glu_CAA_Betaine_NaCl_37C', #7
+             'M63_Glu_Sucrose_37C', #8
+             'M63_Glu_Sucrose_42C', #9
+             'M63_Man_Sucrose_37C', #10
+             'RDM_Sucrose_37C', #11
+             'M63_Gly_NaCl_37C', #12
+             'M63_Gly_Betaine_NaCl_37C', #13
+             'M63_Glu_NaCl_37C', #14
+             'M63_Glu_Betaine_NaCl_37C' #15
+             ),
+  values=c(glycerol_green, #1
+           protein_fill, #2
+           protein_fill, #3
+           glycerol_green, #4
+           protein_fill, #5
+           protein_fill, #6
+           protein_fill, #7
+           glucose_red, #8
+           black_42, #9
+           mannose_blue, #10
+           RDM_Purple, #11
+           glycerol_green, #12
+           glycerol_green, #13
+           glucose_red, #14
+           glucose_red #15
+           )
+)
+
+  
+
+
+
+  
+  
+graph_shape_scale <-
+  scale_shape_manual(
+    breaks = c('M63_Gly_Sucrose_37C', #1
+             'M63_Glu_CAA_Sucrose_30C', #2
+             'M63_Glu_CAA_Sucrose_37C', #3
+             'M63_Gly_Betaine_Sucrose_37C', #4
+             'M63_Glu_CAA_Betaine_Sucrose_37C', #5
+             'M63_Glu_CAA_NaCl_37C', #6
+             'M63_Glu_CAA_Betaine_NaCl_37C', #7
+             'M63_Glu_Sucrose_37C', #8
+             'M63_Glu_Sucrose_42C', #9
+             'M63_Man_Sucrose_37C', #10
+             'RDM_Sucrose_37C', #11
+             'M63_Gly_NaCl_37C', #12
+             'M63_Gly_Betaine_NaCl_37C', #13
+             'M63_Glu_NaCl_37C', #14
+             'M63_Glu_Betaine_NaCl_37C' #15
+             ),
+    values=c(sucrose_diamond, #1
+             sucrose_diamond, #2
+             sucrose_diamond, #3
+             sucrose_betaine, #4
+             sucrose_betaine, #5
+             nacl_square, #6
+             nacl_betaine, #7
+             sucrose_diamond, #8
+             sucrose_diamond, #9
+             sucrose_diamond, #10
+             RDM_triangle, #11
+             nacl_square, #12
+             nacl_betaine, #13
+             nacl_square, #14
+             nacl_betaine #15
+             )
+    )
+
+```
+
+
+```{r Plot1}
+#Growth rate y-axis in hours for glucose NACL on x-axis with and without betaine
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'NaCl')) %>% 
+  filter(str_detect(experiment, 'Glu')) %>% 
+  ggplot(aes(y=MZ1_max_growth_rate, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("01 Osmolarity vs Growth Rate for NaCl")+
+    xlab("Osmolarity [mOsm]")+
+    ylab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+```
+
+
+```{r Plot2}
+#Growth rate y-axis in hours for glucose Sucrose on x-axis with and without betaine
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Sucrose')) %>% 
+  filter(str_detect(experiment, 'Glu')) %>% 
+  filter(str_detect(experiment, '37')) %>% 
+  ggplot(aes(y=MZ1_max_growth_rate, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("02 Osmolarity vs Growth Rate for Sucrose")+
+    xlab("Solute [mM]")+
+    ylab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+
+```
+
+```{r Plot3}
+#like I had in my presentation growth rate on y-axis x-axis osmolarity change colour coding have scatter plot everything put together
+
+
+final_df_unique %>% 
+  filter(str_detect(experiment, '37')) %>% 
+  ggplot(aes(y=MZ1_max_growth_rate, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("03 Osmolarity vs Growth Rate all conditions")+
+    xlab("Osmolarity (mOsm)")+
+    ylab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+```
+
+```{r Plot4}
+#growth rate on y axis x osmolarity put glycerol, glucose and mannose no betaine  with sucrose shock
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Sucrose')) %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
+  filter(str_detect(experiment, '37')) %>% 
+  filter(str_detect(experiment, 'Betaine', negate = TRUE)) %>% 
+  ggplot(aes(y=MZ1_max_growth_rate, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("04 concentration vs Growth Rate for sucrose")+
+    xlab("concentration solute (mM)")+
+    ylab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+```
+
+```{r Plot5}
+#pOtsB-GFP /OD on yaxis x-axis growth-ratefor just 0mm osmolarities mannose, glycerol and glucose with betaine
+
+
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man|RDM')) %>% 
+  filter(str_detect(experiment, '37')) %>% 
+  filter(str_detect(variable, '0000')) %>% 
+  ggplot(aes(y=MZ1_max_gfp, x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+  
+    ggtitle("05 GFP Expression vs Growth Rate in base Media")+
+    ylab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+
+```
+
+
+```{r Plot6}
+#pOtsB-GFP /OD on yaxis x-axis growth-ratefor just 0mm osmolarities mannose, glycerol and glucose with betaine
+
+
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man|RDM')) %>% 
+  filter(str_detect(experiment, '37')) %>% 
+  ggplot(aes(y=MZ1_max_gfp, x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+  
+    ggtitle("06 GFP Expression vs Growth Rate")+
+    ylab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+
+```
+
+```{r Plot7}
+#6. pOtsB-GFP / OD y-axis and osmolarity on x-axis
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man|RDM')) %>% 
+  filter(str_detect(experiment, '37')) %>% 
+  ggplot(aes(y=MZ1_max_gfp, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("07 GFP Expression vs Osmolarity")+
+    ylab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
+    xlab("osmolarity (mOsm)")+
+
+  
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+
+```
+```{r Plot8}
+#8 pOtsB-gfp / OD y-axis maximum yield on y growthrate on x axis
+
+final_df_unique %>% 
+  ggplot(aes(y=MZ1_max_od, x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("08 Max Yield vs Growth Rate")+
+    ylab(expression(paste("Max Yield ", "(", OD[600], ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+```
+
+```{r Plot9}
+#9 pOtsB-gfp / OD y-axis maximum yield on y growthrate on x axis
+
+final_df_unique %>% 
+  ggplot(aes(y=MZ1_max_od, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("09 Max Yield Expression vs Osmolarity")+
+    ylab(expression(paste("Max Yield ", "(", OD[600], ")")))+
+    xlab("Osmolarity (mOsm)")+
+
+  
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+
+```
+
+```{r Plot10}
+#10 max yield y axis against total GFP exponential phase
+
+final_df_unique %>% 
+    ggplot(aes(y=MZ1_max_od, x=MZ1_max_gfp, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("10 Max Yield vs GFP Expression (exponential)")+
+    ylab(expression(paste("Max Yield ", "(", OD[600], ")")))+
+    xlab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+```
+
+
+```{r Plot11}
+#10 max yield y-axis against total AUC GFP
+
+final_df_unique %>% 
+    ggplot(aes(y=MZ1_max_od, x=MZ1_gfp_AUC, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("11 Max Yield vs GFP Area under Curve")+
+    ylab(expression(paste("Max Yield ", "(", OD[600], ")")))+
+    xlab(expression(paste("AUC PotsB-GFP ", "(", OD^-1, ")")))+
+
+  
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+```
+
+
+```{r Plot12}
+#12 pOtsB-gfp / OD y-axis maximum yield on y growthrate on x axis
+
+final_df_unique %>% 
+    ggplot(aes(y=wt_max_od, x=wt_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+  
+    ggtitle("14 Max Yield wt vs Growth Rate wt")+
+    ylab(expression(paste("Max Yield for WT", "(", OD[600], ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+
+  
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+
+```

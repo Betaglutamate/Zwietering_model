@@ -1,12 +1,14 @@
 import model
 
+plot_graphs = False
+
 def run_experiment1():
     experiment1 = model.Experiment(media='M63_Gly',
                                solute='Sucrose',
                                temperature='37',
                                date='2020-09-10',
                                folder='Data/20200910_m63gly_37c_Sucrose',
-                               plot=True)
+                               plot=plot_graphs)
     return experiment1
 
 
@@ -16,7 +18,7 @@ def run_experiment2():
                                temperature='30',
                                date='2020-09-29',
                                folder='Data/20200929_m63GluCAA_30c_Sucrose',
-                               plot=True)
+                               plot=plot_graphs)
     return experiment2
 
 def run_experiment3():
@@ -25,7 +27,7 @@ def run_experiment3():
                                temperature='37',
                                date='2020-10-02',
                                folder='Data/20201002_m63GluCAA_37C_Sucrose',
-                               plot=True)
+                               plot=plot_graphs)
     return experiment3
 
 
@@ -35,7 +37,7 @@ def run_experiment4():
                                 temperature='37',
                                 date='2020-10-06',
                                 folder='Data/20201006_m63Gly_Betaine_37C_Sucrose',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment4
 
 def run_experiment5():
@@ -44,7 +46,7 @@ def run_experiment5():
                                 temperature='37',
                                 date='2020-10-09',
                                 folder='Data/20201009_m63GluCAA_Betaine_37C_Sucrose',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment5
 
 def run_experiment6():
@@ -53,7 +55,7 @@ def run_experiment6():
                                 temperature='37',
                                 date='2020-10-13',
                                 folder='Data/20201013_m63GluCAA_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment6
 
 def run_experiment7():
@@ -62,7 +64,7 @@ def run_experiment7():
                                 temperature='37',
                                 date='2020-10-19',
                                 folder='Data/20201019_m63GluCAA_Betaine_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment7
 
 def run_experiment8():
@@ -71,7 +73,7 @@ def run_experiment8():
                                 temperature='37',
                                 date='2020-10-23',
                                 folder='Data/20201023_m63Glu_37C_Sucrose',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment8
 
 def run_experiment9():
@@ -80,7 +82,7 @@ def run_experiment9():
                                temperature='42',
                                date='2020-10-27',
                                folder='Data/20201027_m63Glu_42C_Sucrose',
-                               plot=True)
+                               plot=plot_graphs)
     return experiment9
 
 def run_experiment10():
@@ -89,7 +91,7 @@ def run_experiment10():
                                 temperature='37',
                                 date='2020-10-27',
                                 folder='Data/20201030_m63Man_37C_Sucrose',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment10
 
 def run_experiment11():
@@ -98,7 +100,7 @@ def run_experiment11():
                                 temperature='37',
                                 date='2020-12-04',
                                 folder='Data/20201204_RDM_37C_Sucrose',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment11
 
 def run_experiment12():
@@ -107,7 +109,7 @@ def run_experiment12():
                                 temperature='37',
                                 date='2021-01-19',
                                 folder='Data/20210119_m63Gly_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment12
 
 def run_experiment13():
@@ -116,7 +118,7 @@ def run_experiment13():
                                 temperature='37',
                                 date='2021-01-25',
                                 folder='Data/20210125_m63Gly_Betaine_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment13
 
 def run_experiment14():
@@ -125,7 +127,7 @@ def run_experiment14():
                                 temperature='37',
                                 date='2021-02-10',
                                 folder='Data/20210202_m63Gly_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment14
 
 def run_experiment15():
@@ -134,7 +136,7 @@ def run_experiment15():
                                 temperature='37',
                                 date='2021-02-16',
                                 folder='Data/20210216_m63Glu_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return experiment15
 
 def run_experiment16():
@@ -143,5 +145,5 @@ def run_experiment16():
                                 temperature='37',
                                 date='2021-02-24',
                                 folder='Data/20210224_m63Glu_Betaine_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return run_experiment16

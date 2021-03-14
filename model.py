@@ -158,6 +158,7 @@ class Plate():
         self.folder = folder
         self.repeat_number = repeat_number
         self.data = data
+        self.filter_value = 0.02
 
     # We use theme_bw so the changes are consistent in all plots
 
@@ -214,7 +215,7 @@ class Plate():
 
     def calculate_max_growth_rate(self):
 
-        filter_OD = 0.02
+        filter_OD = self.filter_value
         length_exponential_phase = 8
 
         split = self.data.groupby('variable')
@@ -251,7 +252,7 @@ class Plate():
                 start_stationary_phase_df = new_df[new_df['Time']
                                                    > end_exponential_phase['end_exponential']]
                 index_start_stationary_phase = start_stationary_phase_df.index[
-                    start_stationary_phase_df['GrowthRate'] < 0.02]
+                    start_stationary_phase_df['GrowthRate'] < self.filter_value]
 
                 if not index_start_stationary_phase.empty:
                     index_start_stationary_phase = index_start_stationary_phase[0]
@@ -497,6 +498,7 @@ class Plate():
             try:
                 od_start_stationary = df.loc[df['Time'] >=
                                             start_stationary_index, 'OD'].values[0]
+                
             except:
                 '''
                 Here I catch the error that there is no start of the stationary phase.
@@ -504,9 +506,10 @@ class Plate():
                 '''
                 od_start_stationary = df.iloc[-1]['OD']
 
-            gfp_max_value = df['normalised_GFP/OD'].max()
-            gfp_area_under_curve = np.trapz(df['normalised_GFP/OD'], df['Time'], dx=1.0, axis=-1)
-
+            df_gfp_exponential = df[(df['mz1_phase']=='Lag') | (df['mz1_phase']=='exponential') | (df['OD'] > self.filter_value)]
+            gfp_max_value = df_gfp_exponential['normalised_GFP/OD'].mean()
+            gfp_area_under_curve = np.trapz(df_gfp_exponential['normalised_GFP/OD'], df_gfp_exponential['Time'], dx=1.0, axis=-1)
+            
             self.max_od_mz1[current_variable] = od_start_stationary
             self.max_gfp[current_variable] = gfp_max_value
             self.gfp_area_under_curve[current_variable] = gfp_area_under_curve
@@ -576,6 +579,9 @@ class Plate():
         # here is the max GFP This is the normalised GFP and thus has values for MZ1 only
         self.complete_df['MZ1_max_gfp'] = self.complete_df['variable']
         self.complete_df['MZ1_max_gfp'] = self.complete_df['MZ1_max_gfp'].map(self.max_gfp)
+
+        self.complete_df['MZ1_gfp_AUC'] = self.complete_df['variable']
+        self.complete_df['MZ1_gfp_AUC'] = self.complete_df['MZ1_gfp_AUC'].map(self.gfp_area_under_curve)
 
         # here is the max OD
         self.complete_df['MZ1_max_od'] = self.complete_df['variable']
