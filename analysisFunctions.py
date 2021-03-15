@@ -63,9 +63,9 @@ def align_df(split_df, align_limit, **kwargs):
     new_time = split_df["Time"].values
     st_dev = np.std(split_df['OD'].iloc[0:10])
     mean = np.mean(split_df['OD'].iloc[0:10])
+    
+    od_filter_value = (mean+(st_dev*3))
     od_filter_value = alignment_value
-    if kwargs:
-        od_filter_value = kwargs.get('od')
 
     filtered_new = split_df.loc[split_df['OD'] >
                                 od_filter_value].reset_index(drop=True)

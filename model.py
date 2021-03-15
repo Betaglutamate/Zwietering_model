@@ -30,6 +30,7 @@ class Experiment:
         self.date = date
         self.folder = folder
         self.filter_value = 0.02
+        self.length_exponential_phase = 8
         print(f"processing {self.name}")
         self.clean_data()
         self.combine_all_repeats()
@@ -59,7 +60,8 @@ class Experiment:
                                folder=self.folder,
                                repeat_number=f"repeat_{num}",
                                data=analyzed_plate,
-                               filter_value=self.filter_value)
+                               filter_value=self.filter_value,
+                               length_exponential_phase=self.length_exponential_phase)
             temp_plate.calculate_max_growth_rate()
             temp_plate.subtract_wt()
             temp_plate.calculate_gfp_by_phase_mz1()
@@ -151,7 +153,7 @@ class Experiment:
 
 class Plate():
 
-    def __init__(self, media, solute, temperature, date, folder, repeat_number, data, filter_value):
+    def __init__(self, media, solute, temperature, date, folder, repeat_number, data, filter_value, length_exponential_phase):
 
         self.name = media
         self.solute = solute
@@ -161,6 +163,7 @@ class Plate():
         self.repeat_number = repeat_number
         self.data = data
         self.filter_value = filter_value
+        self.length_exponential_phase = length_exponential_phase
 
     # We use theme_bw so the changes are consistent in all plots
 
@@ -218,7 +221,8 @@ class Plate():
     def calculate_max_growth_rate(self):
 
         filter_OD = self.filter_value
-        length_exponential_phase = 8
+        length_exponential_phase = self.length_exponential_phase
+
 
         split = self.data.groupby('variable')
         split_df = [split.get_group(x) for x in split.groups]
@@ -372,6 +376,12 @@ class Plate():
             current_variable = df['variable'].values[0]
 
             location_max_growth = self.max_growth_rate[current_variable]['index_GrowthRate']
+            
+            #Here I check that the max growth location is atleast index 4 otherwise it will not be possible
+            # to determine locationmaxgrowth-4
+            if location_max_growth < 4:
+                location_max_growth = 5
+
         # Now calculate + and - 4 of that location
             if np.isnan(location_max_growth):
                 exponential_phase_approximation = np.nan
@@ -405,8 +415,9 @@ class Plate():
         self.lag_phase_df = pd.concat(
             pd.Series(gfp_lag_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
         self.lag_phase_df.loc[:, 'mz1_phase'] = 'Lag'
-        self.exponential_phase_df = pd.concat(
-            pd.Series(gfp_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        if gfp_exponential_phase_dict:
+            self.exponential_phase_df = pd.concat(
+                pd.Series(gfp_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
         self.exponential_phase_df.loc[:, 'mz1_phase'] = 'Exponential'
         self.post_exponential_phase_df = pd.concat(
             pd.Series(gfp_post_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
@@ -436,6 +447,12 @@ class Plate():
             # calculate exponential phase df
             current_variable = df['wt_variable'].values[0]
             location_max_growth = self.max_growth_rate[current_variable]['index_GrowthRate']
+            
+            #Here I check that the max growth location is atleast index 4 otherwise it will not be possible
+            # to determine locationmaxgrowth-4
+            if location_max_growth < 4:
+                location_max_growth = 5
+       
         # Now calculate + and - 4 of that location
             if np.isnan(location_max_growth):
                 exponential_phase_approximation = np.nan
@@ -473,6 +490,7 @@ class Plate():
         self.lag_phase_df.loc[:, 'wt_phase'] = 'Lag'
         self.exponential_phase_df_wt = pd.concat(
             pd.Series(wt_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
+        
         self.exponential_phase_df_wt.loc[:, 'wt_phase'] = 'Exponential'
         self.post_exponential_phase_df_wt = pd.concat(
             pd.Series(wt_post_exponential_phase_dict.values()).dropna().tolist()).reset_index(drop=True)
@@ -508,7 +526,7 @@ class Plate():
                 '''
                 od_start_stationary = df.iloc[-1]['OD']
 
-            df_gfp_exponential = df[(df['mz1_phase']=='Lag') | (df['mz1_phase']=='exponential') | (df['OD'] > self.filter_value)]
+            df_gfp_exponential = df[(df['mz1_phase']=='Exponential') & (df['OD'] > self.filter_value)]
             gfp_max_value = df_gfp_exponential['normalised_GFP/OD'].mean()
             gfp_area_under_curve = np.trapz(df_gfp_exponential['normalised_GFP/OD'], df_gfp_exponential['Time'], dx=1.0, axis=-1)
             

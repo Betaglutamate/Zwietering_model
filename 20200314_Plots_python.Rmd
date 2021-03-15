@@ -20,7 +20,7 @@ library(stringr)
 
 ```{r load_dataframe}
 
-final_df <- read.csv('D:/Github/PlatereaderAnalysisPython/final_df.csv')
+final_df <- read.csv('final_df.csv')
 
 final_df_unique <- 
   final_df %>%
@@ -293,10 +293,8 @@ final_df_unique %>%
 ```{r Plot6}
 #pOtsB-GFP /OD on yaxis x-axis growth-ratefor just 0mm osmolarities mannose, glycerol and glucose with betaine
 
-
-
 final_df_unique %>% 
-  filter(str_detect(experiment, 'Glu|Gly|Man|RDM')) %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
   filter(str_detect(experiment, '37')) %>% 
   ggplot(aes(y=MZ1_max_gfp, x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
     geom_point(size=shape_size, stroke =stroke_size)+
