@@ -55,7 +55,7 @@ RDM_Purple <- "#7b2cbf"
 
 #shapes
 nacl_square <- 22
-nacl_betaine <- 24
+nacl_betaine <- 21
 sucrose_diamond <- 23
 sucrose_betaine <-24
 RDM_triangle <- 25
@@ -231,6 +231,7 @@ final_df_unique %>%
 
 
 final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
   filter(str_detect(experiment, '37')) %>% 
   ggplot(aes(y=MZ1_max_growth_rate, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
     geom_point(size=shape_size, stroke =stroke_size)+
@@ -268,8 +269,6 @@ final_df_unique %>%
 
 ```{r Plot5}
 #pOtsB-GFP /OD on yaxis x-axis growth-ratefor just 0mm osmolarities mannose, glycerol and glucose with betaine
-
-
 
 final_df_unique %>% 
   filter(str_detect(experiment, 'Glu|Gly|Man|RDM')) %>% 
@@ -311,10 +310,9 @@ final_df_unique %>%
 ```
 
 ```{r Plot7}
-#6. pOtsB-GFP / OD y-axis and osmolarity on x-axis
 
 final_df_unique %>% 
-  filter(str_detect(experiment, 'Glu|Gly|Man|RDM')) %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
   filter(str_detect(experiment, '37')) %>% 
   ggplot(aes(y=MZ1_max_gfp, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
     geom_point(size=shape_size, stroke =stroke_size)+
@@ -335,6 +333,7 @@ final_df_unique %>%
 #8 pOtsB-gfp / OD y-axis maximum yield on y growthrate on x axis
 
 final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
   ggplot(aes(y=MZ1_max_od, x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
     geom_point(size=shape_size, stroke =stroke_size)+
     
@@ -412,7 +411,7 @@ final_df_unique %>%
     ggplot(aes(y=wt_max_od, x=wt_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
     geom_point(size=shape_size, stroke =stroke_size)+
   
-    ggtitle("14 Max Yield wt vs Growth Rate wt")+
+    ggtitle("12 Max Yield wt vs Growth Rate wt")+
     ylab(expression(paste("Max Yield for WT", "(", OD[600], ")")))+
     xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
 
@@ -424,3 +423,94 @@ final_df_unique %>%
 
 
 ```
+
+```{r Plot13}
+
+final_df_unique %>% 
+    ggplot(aes(y=MZ1_max_growth_rate, x=wt_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    
+    ggtitle("13 Growth rate WT vs growth rate MZ1")+
+    ylab(expression(paste("Growth rate MZ1 ", lambda, " (", hour^-1, ")")))+
+    xlab(expression(paste("Growth rate WT ", lambda, " (", hour^-1, ")")))+
+  
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+```
+
+```{r Plot14}
+
+
+final_df_unique %>% 
+  filter(str_detect(variable, '0000')) %>%
+    ggplot(aes(y=MZ1_max_od, x=GrowthRate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+    geom_point(aes(y=wt_max_od, x=wt_max_growth_rate),size=1.5, stroke =1.5)+
+    
+    ggtitle("14 Max Yield vs Growthrate 0 condition")+
+    ylab(expression(paste("Max Yield", "(", OD[600], ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+```
+
+```{r Plot18}
+#11. grey thirty degrees, 42C black pOTSb/OD growth rate x-axis 
+
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
+  ggplot(aes(y=MZ1_max_gfp, x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+  
+    ggtitle("18 GFP vs growthrate with temperature")+
+    ylab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+  ```
+
+
+```{r Plot19}
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
+  ggplot(aes(y=log(MZ1_max_gfp), x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+  
+    ggtitle("19 log(GFP) vs growthrate with temperature")+
+    ylab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+  ```
+
+  ```{r Plot20}
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
+  filter(str_detect(experiment, 'NaCl')) %>% 
+  ggplot(aes(y=log(MZ1_max_gfp), x=MZ1_max_growth_rate, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+  
+    ggtitle("19 log(GFP) vs growthrate NaCl")+
+    ylab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
+    xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+
+  ```

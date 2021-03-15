@@ -7,7 +7,7 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 
 # experiment1 = re.run_experiment1()
-# experiment3 = re.run_experiment3() #error m63glucaa
+experiment3 = re.run_experiment3() #error m63glucaa
 
 
 if __name__ == '__main__':

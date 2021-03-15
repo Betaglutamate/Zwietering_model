@@ -258,7 +258,7 @@ class Plate():
                 start_stationary_phase_df = new_df[new_df['Time']
                                                    > end_exponential_phase['end_exponential']]
                 index_start_stationary_phase = start_stationary_phase_df.index[
-                    start_stationary_phase_df['GrowthRate'] < self.filter_value]
+                    start_stationary_phase_df['GrowthRate'] < 0.01]
 
                 if not index_start_stationary_phase.empty:
                     index_start_stationary_phase = index_start_stationary_phase[0]
@@ -516,8 +516,7 @@ class Plate():
             start_stationary_index = self.start_stationary_phase[current_variable]['start_stationary']
             
             try:
-                od_start_stationary = df.loc[df['Time'] >=
-                                            start_stationary_index, 'OD'].values[0]
+                od_start_stationary = df.loc[df['OD'] <= 0.01, 'OD'].values[0]
                 
             except:
                 '''
