@@ -5,7 +5,7 @@ import csv
 from scipy import stats
 
 
-def analyze_plate(filepath):
+def analyze_plate(filepath, alignment_value):
 
     plate_normalized = normalize_plate(filepath)
 
@@ -40,7 +40,7 @@ def analyze_plate(filepath):
     # OK its in the long format now to align it to OD
 
     aligned_df_long = merged.groupby('variable').apply(
-        align_df).reset_index(drop=True)
+        align_df, align_limit = alignment_value).reset_index(drop=True)
 
     aligned_df_long.loc[:, 'Group'] = aligned_df_long['variable'].apply(
         lambda x: x[0:7])
@@ -53,16 +53,17 @@ def analyze_plate(filepath):
     return aligned_df_long
 
 
-def align_df(split_df, **kwargs):
+def align_df(split_df, align_limit, **kwargs):
     """
     This function takes a single experiment and aligns it to > stDev*5
     or you can pass in a kw od = num to set alignment
     """
+    alignment_value = align_limit
 
     new_time = split_df["Time"].values
     st_dev = np.std(split_df['OD'].iloc[0:10])
     mean = np.mean(split_df['OD'].iloc[0:10])
-    od_filter_value = (mean+(st_dev*3))
+    od_filter_value = alignment_value
     if kwargs:
         od_filter_value = kwargs.get('od')
 

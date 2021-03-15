@@ -29,6 +29,7 @@ class Experiment:
         self.temperature = temperature
         self.date = date
         self.folder = folder
+        self.filter_value = 0.02
         print(f"processing {self.name}")
         self.clean_data()
         self.combine_all_repeats()
@@ -50,14 +51,15 @@ class Experiment:
 
         for num, repeat in enumerate(files_to_analyze):
             filepath = os.path.join(repeat['root'], repeat['filename'])
-            analyzed_plate = af.analyze_plate(filepath)
+            analyzed_plate = af.analyze_plate(filepath, self.filter_value)
             temp_plate = Plate(media=self.name,
                                solute=self.solute,
                                temperature=self.temperature,
                                date=self.date,
                                folder=self.folder,
                                repeat_number=f"repeat_{num}",
-                               data=analyzed_plate)
+                               data=analyzed_plate,
+                               filter_value=self.filter_value)
             temp_plate.calculate_max_growth_rate()
             temp_plate.subtract_wt()
             temp_plate.calculate_gfp_by_phase_mz1()
@@ -149,7 +151,7 @@ class Experiment:
 
 class Plate():
 
-    def __init__(self, media, solute, temperature, date, folder, repeat_number, data):
+    def __init__(self, media, solute, temperature, date, folder, repeat_number, data, filter_value):
 
         self.name = media
         self.solute = solute
@@ -158,7 +160,7 @@ class Plate():
         self.folder = folder
         self.repeat_number = repeat_number
         self.data = data
-        self.filter_value = 0.02
+        self.filter_value = filter_value
 
     # We use theme_bw so the changes are consistent in all plots
 
