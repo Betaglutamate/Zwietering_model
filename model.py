@@ -29,7 +29,7 @@ class Experiment:
         self.temperature = temperature
         self.date = date
         self.folder = folder
-        self.filter_value = 0.02
+        self.filter_value = 0.01
         self.length_exponential_phase = 8
         print(f"processing {self.name}")
         self.clean_data()
