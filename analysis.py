@@ -6,8 +6,6 @@ import datetime
 warnings.filterwarnings("ignore")
 import pandas as pd
 
-experiment14 = re.run_experiment14()
-
 
 if __name__ == '__main__':
 

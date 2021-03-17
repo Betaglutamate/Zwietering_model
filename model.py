@@ -6,6 +6,7 @@ import plotnine as gg
 import seaborn as sns
 import pandas as pd
 import numpy as np
+from datetime import date
 
 
 class Experiment:
@@ -232,9 +233,12 @@ class Plate():
         start_stationary_phase_dict = {}
 
         for temp_df in split_df:
+            df_mean = temp_df['OD'].values[0:10].mean()
+            df_std = temp_df['OD'].values[0:10].std()
+
             temp_df = temp_df.reset_index(drop=True)
             current_variable = temp_df['variable'].values[0]
-            new_df = temp_df[temp_df['OD'] > filter_OD]
+            new_df = temp_df[temp_df['OD'] > df_mean+(df_std)]
             if new_df.empty:
                 max_growth_rate = {'GrowthRate': 0, 'index_GrowthRate': np.nan}
                 end_exponential_phase = {
@@ -242,8 +246,7 @@ class Plate():
                 start_stationary_phase = {
                     'start_stationary': np.nan, 'index_start_stationary': np.nan}
             else:
-                max_growth_rate = {'GrowthRate': new_df['GrowthRate'].max(
-                ), 'index_GrowthRate': new_df['GrowthRate'].idxmax()}
+                max_growth_rate = {'GrowthRate': np.mean(new_df['GrowthRate'].nlargest(8)), 'index_GrowthRate': new_df['GrowthRate'].idxmax()}
 
                 if max_growth_rate['index_GrowthRate']+length_exponential_phase < len(new_df):
                     end_exponential_phase = {'end_exponential': new_df['Time'][(
@@ -251,9 +254,15 @@ class Plate():
                         max_growth_rate['index_GrowthRate'] + length_exponential_phase)}
 
                 else:  # I added this else statement because in some cases runs were not done by the end of exponential phase or there is no clear phase
-                    end_exponential_phase = {'end_exponential': new_df['Time'][(
-                        max_growth_rate['index_GrowthRate'])], 'index_end_exponential': (
-                        max_growth_rate['index_GrowthRate'])}
+                    print(current_variable)
+                    
+                    if np.isnan(max_growth_rate['index_GrowthRate']):
+                        end_exponential_phase = {'end_exponential':  new_df.iloc[0]['Time'],
+                         'index_end_exponential': (0)}
+                    else:
+                        end_exponential_phase = {'end_exponential': new_df['Time'][(
+                            max_growth_rate['index_GrowthRate'])], 'index_end_exponential': (
+                            max_growth_rate['index_GrowthRate'])}
 
                 start_stationary_phase_df = new_df[new_df['Time']
                                                    > end_exponential_phase['end_exponential']]
@@ -265,13 +274,15 @@ class Plate():
                 else:
                     index_start_stationary_phase = -1  # Here I set the index to the last measurement
                     # you could debate that this is incorrect as cells mayb not be in stationary phase yet
+                    start_stationary_phase = {'start_stationary': start_stationary_phase_df, 'index_start_stationary': index_start_stationary_phase}
+
 
                 if not index_start_stationary_phase == -1:
                     start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
                         index_start_stationary_phase], 'index_start_stationary': index_start_stationary_phase}
-                if index_start_stationary_phase == -1:
-                    start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
-                        index_start_stationary_phase:].values[0], 'index_start_stationary': index_start_stationary_phase}
+                # if index_start_stationary_phase == -1:
+                #     start_stationary_phase = {'start_stationary': start_stationary_phase_df['Time'][
+                #         index_start_stationary_phase:].values[0], 'index_start_stationary': index_start_stationary_phase}
 
             max_growth_rate_dict[current_variable] = max_growth_rate
             end_exponential_phase_dict[current_variable] = end_exponential_phase
@@ -293,23 +304,12 @@ class Plate():
         for df in split_df:
             df = df.dropna()
             try:
-                df_mean = df['OD'].values[0:10].mean()
-                df_std = df['OD'].values[0:10].std()
-                std1 = df['Time'][df['OD'] > (df_mean + df_std*1)].values[0]
-                std3 = df['Time'][df['OD'] > (df_mean + df_std*3)].values[0]
-                std5 = df['Time'][df['OD'] > (df_mean + df_std*5)].values[0]
-                std10 = df['Time'][df['OD'] > (df_mean + df_std*10)].values[0]
-
                 current_variable = df['variable'].values[0]
                 gr_plot = (
                     gg.ggplot(df) +
                     gg.aes(x='Time', y='GrowthRate', color='variable') +
                     gg.geom_point() +
                     gg.geom_hline(yintercept=self.max_growth_rate[current_variable]['GrowthRate'], color='black') +
-                    gg.geom_vline(xintercept=std1, color='red') +
-                    gg.geom_vline(xintercept=std3, color='red') +
-                    gg.geom_vline(xintercept=std5, color='red') +
-                    gg.geom_vline(xintercept=std10, color='red') +
 
                     gg.geom_vline(xintercept=self.end_exponential_phase[current_variable]['end_exponential'], color='blue') +
                     gg.geom_vline(xintercept=self.start_stationary_phase[current_variable]['start_stationary'], color='green') +
