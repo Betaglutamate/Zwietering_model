@@ -1,6 +1,6 @@
 import model
 
-plot_graphs = True
+plot_graphs = False
 
 def run_experiment1():
     experiment1 = model.Experiment(media='M63_Gly',
@@ -147,3 +147,12 @@ def run_experiment16():
                                 folder='Data/20210224_m63Glu_Betaine_37C_NaCl',
                                 plot=plot_graphs)
     return run_experiment16
+
+def run_experiment17():
+    run_experiment17 = model.Experiment(media='M63_Glu',
+                                solute='NaCl',
+                                temperature='37',
+                                date='2021-02-24',
+                                folder='Data/20210312_m63Glu_37C_NaCl',
+                                plot=True)
+    return run_experiment17

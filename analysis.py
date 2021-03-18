@@ -27,6 +27,7 @@ if __name__ == '__main__':
         experiment15 = executor.submit(re.run_experiment15)
         experiment15 = executor.submit(re.run_experiment15)
         experiment16 = executor.submit(re.run_experiment16)
+        experiment16 = executor.submit(re.run_experiment17)
 
     print("finished analysis")
 
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     
     all_experiments_dataframe = []
     for experiment in experiment_summary:
-        experiment.experiment_df['experiment'] = '_'.join([experiment.name, experiment.solute, f'{experiment.temperature}C'])
+        experiment.experiment_df['experiment'] = '_'.join([experiment.name, experiment.solute, f'{experiment.temperature}C', experiment.date])
         all_experiments_dataframe.append(experiment.experiment_df)
 
     final_df = pd.concat(all_experiments_dataframe).reset_index(drop=True)

@@ -247,6 +247,12 @@ class Plate():
                     'start_stationary': np.nan, 'index_start_stationary': np.nan}
             else:
                 max_growth_rate = {'GrowthRate': np.mean(new_df['GrowthRate'].nlargest(8)), 'index_GrowthRate': new_df['GrowthRate'].idxmax()}
+                if max_growth_rate['GrowthRate'] <0:
+                    max_growth_rate = {'GrowthRate': 0, 'index_GrowthRate': np.nan}
+                end_exponential_phase = {
+                    'end_exponential': np.nan, 'index_end_exponential': np.nan}
+                start_stationary_phase = {
+                    'start_stationary': np.nan, 'index_start_stationary': np.nan}
 
                 if max_growth_rate['index_GrowthRate']+length_exponential_phase < len(new_df):
                     end_exponential_phase = {'end_exponential': new_df['Time'][(
@@ -516,7 +522,9 @@ class Plate():
             start_stationary_index = self.start_stationary_phase[current_variable]['start_stationary']
             
             try:
-                od_start_stationary = df.loc[df['OD'] <= 0.01, 'OD'].values[0]
+                # od_start_stationary = df.loc[df['Time'] >=
+                #                             start_stationary_index, 'OD'].values[0]
+                od_start_stationary = df['OD'].max()
                 
             except:
                 '''
@@ -557,8 +565,9 @@ class Plate():
             start_stationary_index = self.start_stationary_phase[current_variable]['start_stationary']
             
             try:
-                od_start_stationary = df.loc[df['Time'] >=
-                                            start_stationary_index, 'OD'].values[0]
+                # od_start_stationary = df.loc[df['Time'] >=
+                #                             start_stationary_index, 'OD'].values[0]
+                od_start_stationary = df['OD'].max()
             except:
                 '''
                 Here I catch the error that there is no start of the stationary phase.
