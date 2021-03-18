@@ -27,7 +27,7 @@ if __name__ == '__main__':
         experiment15 = executor.submit(re.run_experiment15)
         experiment15 = executor.submit(re.run_experiment15)
         experiment16 = executor.submit(re.run_experiment16)
-        experiment16 = executor.submit(re.run_experiment17)
+        experiment17 = executor.submit(re.run_experiment17)
 
     print("finished analysis")
 
@@ -47,7 +47,8 @@ if __name__ == '__main__':
         experiment13.result(),
         experiment14.result(),
         experiment15.result(),
-        experiment16.result()
+        experiment16.result(),
+        experiment17.result()
     ]    
 
 

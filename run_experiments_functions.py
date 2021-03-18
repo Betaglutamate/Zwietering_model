@@ -143,7 +143,7 @@ def run_experiment16():
     run_experiment16 = model.Experiment(media='M63_Glu_Betaine',
                                 solute='NaCl',
                                 temperature='37',
-                                date='2021-02-24',
+                                date='2021-03-12',
                                 folder='Data/20210224_m63Glu_Betaine_37C_NaCl',
                                 plot=plot_graphs)
     return run_experiment16
@@ -154,5 +154,5 @@ def run_experiment17():
                                 temperature='37',
                                 date='2021-02-24',
                                 folder='Data/20210312_m63Glu_37C_NaCl',
-                                plot=True)
+                                plot=plot_graphs)
     return run_experiment17

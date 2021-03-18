@@ -26,7 +26,7 @@ final_df_unique <-
   final_df %>%
   distinct(experiment,repeat.,variable, .keep_all = TRUE)
 
-
+final_df_unique
 ```
 
 ```{r set_graph_settings}
@@ -69,21 +69,23 @@ stroke_size <- 1.2
 #styling
 graph_color_scale <-
 scale_color_manual(
-  breaks = c('M63_Gly_Sucrose_37C', #1
-             'M63_Glu_CAA_Sucrose_30C', #2
-             'M63_Glu_CAA_Sucrose_37C', #3
-             'M63_Gly_Betaine_Sucrose_37C', #4
-             'M63_Glu_CAA_Betaine_Sucrose_37C', #5
-             'M63_Glu_CAA_NaCl_37C', #6
-             'M63_Glu_CAA_Betaine_NaCl_37C', #7
-             'M63_Glu_Sucrose_37C', #8
-             'M63_Glu_Sucrose_42C', #9
-             'M63_Man_Sucrose_37C', #10
-             'RDM_Sucrose_37C', #11
-             'M63_Gly_NaCl_37C', #12
-             'M63_Gly_Betaine_NaCl_37C', #13
-             'M63_Glu_NaCl_37C', #14
-             'M63_Glu_Betaine_NaCl_37C' #15
+  breaks = c('M63_Gly_Sucrose_37C_2020-09-10', #1
+             'M63_Glu_CAA_Sucrose_30C_2020-09-29', #2
+             'M63_Glu_CAA_Sucrose_37C_2020-10-02', #3
+             'M63_Gly_Betaine_Sucrose_37C_2020-10-06', #4
+             'M63_Glu_CAA_Betaine_Sucrose_37C_2020-10-09', #5
+             'M63_Glu_CAA_NaCl_37C_2020-10-13', #6
+             'M63_Glu_CAA_Betaine_NaCl_37C_2020-10-19', #7
+             'M63_Glu_Sucrose_37C_2020-10-23', #8
+             'M63_Glu_Sucrose_42C_2020-10-27', #9
+             'M63_Man_Sucrose_37C_2020-10-27', #10
+             'RDM_Sucrose_37C_2020-12-04', #11
+             'M63_Gly_NaCl_37C_2021-01-19', #12
+             'M63_Gly_Betaine_NaCl_37C_2021-01-25', #13
+             'M63_Gly_NaCl_37C_2021-02-10', #14
+             'M63_Glu_NaCl_37C_2021-02-16', #15
+             'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
+             'M63_Glu_NaCl_37C_2021-03-12' #17
              ),
   values=c(glycerol_green, #1
            gray_30, #2
@@ -99,28 +101,32 @@ scale_color_manual(
            glycerol_green, #12
            glycerol_green, #13
            glucose_red, #14
-           glucose_red #15
+           glucose_red, #15
+           glucose_red, #16
+           glucose_red #17
            )
 )
 
 
 graph_fill_scale <-
 scale_fill_manual(
-  breaks = c('M63_Gly_Sucrose_37C', #1
-             'M63_Glu_CAA_Sucrose_30C', #2
-             'M63_Glu_CAA_Sucrose_37C', #3
-             'M63_Gly_Betaine_Sucrose_37C', #4
-             'M63_Glu_CAA_Betaine_Sucrose_37C', #5
-             'M63_Glu_CAA_NaCl_37C', #6
-             'M63_Glu_CAA_Betaine_NaCl_37C', #7
-             'M63_Glu_Sucrose_37C', #8
-             'M63_Glu_Sucrose_42C', #9
-             'M63_Man_Sucrose_37C', #10
-             'RDM_Sucrose_37C', #11
-             'M63_Gly_NaCl_37C', #12
-             'M63_Gly_Betaine_NaCl_37C', #13
-             'M63_Glu_NaCl_37C', #14
-             'M63_Glu_Betaine_NaCl_37C' #15
+  breaks = c('M63_Gly_Sucrose_37C_2020-09-10', #1
+             'M63_Glu_CAA_Sucrose_30C_2020-09-29', #2
+             'M63_Glu_CAA_Sucrose_37C_2020-10-02', #3
+             'M63_Gly_Betaine_Sucrose_37C_2020-10-06', #4
+             'M63_Glu_CAA_Betaine_Sucrose_37C_2020-10-09', #5
+             'M63_Glu_CAA_NaCl_37C_2020-10-13', #6
+             'M63_Glu_CAA_Betaine_NaCl_37C_2020-10-19', #7
+             'M63_Glu_Sucrose_37C_2020-10-23', #8
+             'M63_Glu_Sucrose_42C_2020-10-27', #9
+             'M63_Man_Sucrose_37C_2020-10-27', #10
+             'RDM_Sucrose_37C_2020-12-04', #11
+             'M63_Gly_NaCl_37C_2021-01-19', #12
+             'M63_Gly_Betaine_NaCl_37C_2021-01-25', #13
+             'M63_Gly_NaCl_37C_2021-02-10', #14
+             'M63_Glu_NaCl_37C_2021-02-16', #15
+             'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
+             'M63_Glu_NaCl_37C_2021-03-12'
              ),
   values=c(glycerol_green, #1
            protein_fill, #2
@@ -136,33 +142,31 @@ scale_fill_manual(
            glycerol_green, #12
            glycerol_green, #13
            glucose_red, #14
-           glucose_red #15
+           glucose_red, #15
+           glucose_red, #16
+           glucose_red #17
            )
 )
-
-  
-
-
-
-  
   
 graph_shape_scale <-
   scale_shape_manual(
-    breaks = c('M63_Gly_Sucrose_37C', #1
-             'M63_Glu_CAA_Sucrose_30C', #2
-             'M63_Glu_CAA_Sucrose_37C', #3
-             'M63_Gly_Betaine_Sucrose_37C', #4
-             'M63_Glu_CAA_Betaine_Sucrose_37C', #5
-             'M63_Glu_CAA_NaCl_37C', #6
-             'M63_Glu_CAA_Betaine_NaCl_37C', #7
-             'M63_Glu_Sucrose_37C', #8
-             'M63_Glu_Sucrose_42C', #9
-             'M63_Man_Sucrose_37C', #10
-             'RDM_Sucrose_37C', #11
-             'M63_Gly_NaCl_37C', #12
-             'M63_Gly_Betaine_NaCl_37C', #13
-             'M63_Glu_NaCl_37C', #14
-             'M63_Glu_Betaine_NaCl_37C' #15
+    breaks = c('M63_Gly_Sucrose_37C_2020-09-10', #1
+             'M63_Glu_CAA_Sucrose_30C_2020-09-29', #2
+             'M63_Glu_CAA_Sucrose_37C_2020-10-02', #3
+             'M63_Gly_Betaine_Sucrose_37C_2020-10-06', #4
+             'M63_Glu_CAA_Betaine_Sucrose_37C_2020-10-09', #5
+             'M63_Glu_CAA_NaCl_37C_2020-10-13', #6
+             'M63_Glu_CAA_Betaine_NaCl_37C_2020-10-19', #7
+             'M63_Glu_Sucrose_37C_2020-10-23', #8
+             'M63_Glu_Sucrose_42C_2020-10-27', #9
+             'M63_Man_Sucrose_37C_2020-10-27', #10
+             'RDM_Sucrose_37C_2020-12-04', #11
+             'M63_Gly_NaCl_37C_2021-01-19', #12
+             'M63_Gly_Betaine_NaCl_37C_2021-01-25', #13
+             'M63_Gly_NaCl_37C_2021-02-10', #14
+             'M63_Glu_NaCl_37C_2021-02-16', #15
+             'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
+             'M63_Glu_NaCl_37C_2021-03-12'
              ),
     values=c(sucrose_diamond, #1
              sucrose_diamond, #2
@@ -178,7 +182,9 @@ graph_shape_scale <-
              nacl_square, #12
              nacl_betaine, #13
              nacl_square, #14
-             nacl_betaine #15
+             nacl_square, #15
+             nacl_betaine, #16
+             nacl_square #17
              )
     )
 
