@@ -113,6 +113,8 @@ def normalize_plate(path_to_excel):
     input_df_od = input_df[45:143].transpose()
     input_df_gfp = input_df[146:244].transpose()
 
+
+
     # Now I want to set the Index as Time
 
     input_df_od.reset_index(inplace=True, drop=True)
@@ -144,7 +146,9 @@ def normalize_plate(path_to_excel):
         zip(input_df_gfp.columns, col_names)),  inplace=True)
 
     # now find the Time in minutes
-    new_time = [round((x*(7.6)/60), 2) for x in range(0, len(input_df_od))]
+    new_time = pd.Series(input_df_od.loc[:,'Time (min)'] / 3600).astype(float).round(3)
+
+    # new_time = [round((x*(7.6)/60), 2) for x in range(0, len(input_df_od))]
     input_df_od.loc[:, "Time (min)"] = new_time
     input_df_gfp.loc[:, "Time (min)"] = new_time
 

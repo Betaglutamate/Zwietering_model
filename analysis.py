@@ -6,7 +6,6 @@ import datetime
 warnings.filterwarnings("ignore")
 import pandas as pd
 
-
 if __name__ == '__main__':
 
     with ProcessPoolExecutor(max_workers=5) as executor:
