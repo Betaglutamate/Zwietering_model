@@ -24,8 +24,7 @@ final_df <- read.csv('final_df.csv')
 
 final_df_unique <- 
   final_df %>%
-  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE) %>%
-  filter(experiment != 'M63_Glu_NaCl_37C_2021-02-16')
+  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE)
 
 final_df_unique %>% 
 select(experiment, osmolarity, MZ1_max_growth_rate, MZ1_max_od, MZ1_max_gfp, wt_max_growth_rate, wt_max_od,)
@@ -102,7 +101,7 @@ scale_color_manual(
            RDM_Purple, #11
            glycerol_green, #12
            glycerol_green, #13
-           glucose_red, #14
+           glycerol_green, #14
            glucose_red, #15
            glucose_red, #16
            glucose_red #17
@@ -143,7 +142,7 @@ scale_fill_manual(
            RDM_Purple, #11
            glycerol_green, #12
            glycerol_green, #13
-           glucose_red, #14
+           glycerol_green, #14
            glucose_red, #15
            glucose_red, #16
            glucose_red #17
@@ -274,6 +273,7 @@ final_df_unique %>%
     graph_shape_scale
 
 ```
+
 ```{r Plot4_2}
 #growth rate on y axis x osmolarity put glycerol, glucose and mannose no betaine  with sucrose shock
 
@@ -282,6 +282,7 @@ final_df_unique %>%
   filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
   filter(str_detect(experiment, '37')) %>% 
   filter(str_detect(experiment, 'Betaine', negate = TRUE)) %>% 
+
   ggplot(aes(y=MZ1_max_growth_rate, x=osmolarity, color = experiment, shape = experiment, fill = experiment))+
     geom_point(size=shape_size, stroke =stroke_size)+
     
