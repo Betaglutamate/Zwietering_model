@@ -531,7 +531,7 @@ class Plate():
                 Here I catch the error that there is no start of the stationary phase.
                 This means that the OD will eb undervalued.
                 '''
-                od_start_stationary = df.iloc[-1]['OD']
+                od_start_stationary = np.nan
 
             df_gfp_exponential = df[(df['mz1_phase']=='Exponential') & (df['OD'] > self.filter_value)]
             gfp_max_value = df_gfp_exponential['normalised_GFP/OD'].mean()
@@ -573,7 +573,7 @@ class Plate():
                 Here I catch the error that there is no start of the stationary phase.
                 This means that the OD will eb undervalued.
                 '''
-                od_start_stationary = df.iloc[-1]['OD']
+                od_start_stationary = np.nan
 
             gfp_max_value = df['normalised_GFP/OD'].max()
             gfp_area_under_curve_wt = np.trapz(df['normalised_GFP/OD'], df['Time'], dx=1.0, axis=-1)

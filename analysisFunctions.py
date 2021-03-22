@@ -64,7 +64,7 @@ def align_df(split_df, align_limit, **kwargs):
     st_dev = np.std(split_df['OD'].iloc[0:10])
     mean = np.mean(split_df['OD'].iloc[0:10])
     
-    # od_filter_value = (mean+(st_dev*8))
+    #od_filter_value = (mean+(st_dev*5))
     od_filter_value = alignment_value
 
     filtered_new = split_df.loc[split_df['OD'] >
