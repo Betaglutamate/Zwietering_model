@@ -30,7 +30,7 @@ class Experiment:
         self.temperature = temperature
         self.date = date
         self.folder = folder
-        self.filter_value = 0.01
+        self.filter_value = 0.00025
         self.length_exponential_phase = 8
         print(f"processing {self.name}")
         self.clean_data()
@@ -255,12 +255,14 @@ class Plate():
                     'start_stationary': np.nan, 'index_start_stationary': np.nan}
 
                 if max_growth_rate['index_GrowthRate']+length_exponential_phase < len(new_df):
-                    end_exponential_phase = {'end_exponential': new_df['Time'][(
-                        max_growth_rate['index_GrowthRate'] + length_exponential_phase)], 'index_end_exponential': (
-                        max_growth_rate['index_GrowthRate'] + length_exponential_phase)}
+                    
+                    end_exponential_phase = {'end_exponential': new_df['Time'].loc[
+                        max_growth_rate['index_GrowthRate']: (max_growth_rate['index_GrowthRate'] + length_exponential_phase)].tail(1).values[0], 
+                        'index_end_exponential': new_df.loc[max_growth_rate['index_GrowthRate']: (max_growth_rate['index_GrowthRate'] + length_exponential_phase)].tail(1).index.values[0]}
+
+
 
                 else:  # I added this else statement because in some cases runs were not done by the end of exponential phase or there is no clear phase
-                    print(current_variable)
                     
                     if np.isnan(max_growth_rate['index_GrowthRate']):
                         end_exponential_phase = {'end_exponential':  new_df.iloc[0]['Time'],

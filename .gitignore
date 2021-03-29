@@ -3,4 +3,5 @@
 *.pyc
 *.p
 *.csv
-
+*.html
+.Rhistory

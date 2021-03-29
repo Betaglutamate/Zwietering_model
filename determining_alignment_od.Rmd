@@ -1,0 +1,122 @@
+---
+title: "Determining minimal OD threshold"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+    
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, fig.width=14,fig.height=8)
+```
+
+```{r load_dependencies}
+
+
+library(tidyverse)
+library(stringr)
+
+graph_theme <- 
+  theme_bw() + 
+  theme(
+    plot.title = element_text(face = "bold", size = 24, hjust = 0.5),
+    legend.background = element_rect(fill = "white", size = 4, colour = "white"),
+    # legend.justification = c(0, 1),
+    # legend.position = c(0, 1),
+    axis.ticks = element_line(colour = "grey70", size = 0.3),
+    panel.grid.major = element_line(colour = "grey70", size = 0.3),
+    panel.grid.minor = element_blank(),
+    text=element_text(size=20)
+  )
+
+
+```
+
+```{r load_dataframe}
+
+final_df002 <- read.csv('final_df002.csv')%>% 
+  mutate(threshold = 0.02)
+final_df001 <- read.csv('final_df001.csv')%>% 
+  mutate(threshold = 0.01)
+final_df0005 <- read.csv('final_df0005.csv')%>% 
+  mutate(threshold = 0.005)
+final_df00025 <- read.csv('final_df00025.csv')%>% 
+  mutate(threshold = 0.0025)
+final_df0000 <- read.csv('final_df0000.csv')%>% 
+  mutate(threshold = 0)
+
+final_df_unique002 <- 
+  final_df002 %>%
+  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE)%>% 
+  mutate(threshold = 0.02)
+
+final_df_unique001 <- 
+  final_df001 %>%
+  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE)%>% 
+  mutate(threshold = 0.01)
+
+final_df_unique0005 <- 
+  final_df0005 %>%
+  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE)%>% 
+  mutate(threshold = 0.005)
+
+final_df_unique00025 <- 
+  final_df0005 %>%
+  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE)%>% 
+  mutate(threshold = 0.0025)
+
+final_df_unique0000 <- 
+  final_df0000 %>%
+  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE) %>% 
+  mutate(threshold = 0)
+
+final_final <-
+  bind_rows(final_df002, final_df001, final_df0005, final_df0000)
+
+```
+
+``` {r calculations}
+
+calculate_std_gr <- function(df) {
+  standard_deviation = sd(df$GrowthRate[0:10])
+  mean_base = mean(df$GrowthRate[0:10])
+  new_df <- tibble(experiment = df$experiment[1], group = df$Group[1], standard_deviation, mean_base, threshold = df$threshold[1])
+  new_df <- new_df %>% 
+    mutate(percent_mean = (standard_deviation/mean_base*100))
+  return(new_df)
+}
+
+
+final_plotting <-final_final %>% 
+  group_by(experiment, threshold, Group) %>% 
+  group_split() %>% 
+  map(calculate_std_gr) %>% 
+  bind_rows()
+
+
+
+
+final_plotting %>% 
+  ggplot(aes(x=threshold, y=standard_deviation, colour = interaction(experiment,group)))+
+  geom_point()
+
+
+final_plotting %>% 
+  ggplot(aes(x=threshold, y=mean_base, colour = experiment))+
+  geom_point()
+
+final_plotting %>% 
+  ggplot(aes(x=threshold, y=percent_mean, colour = experiment))+
+  geom_point()
+
+final_plotting %>% 
+  ggplot(aes(x=threshold, y=percent_mean, colour = experiment))+
+  geom_point()+
+  ylim(0,100)+
+  facet_wrap(~group)+
+  graph_theme+
+  theme(legend.position = "none") +
+  ggsave("sweetspot.png", width=12, height =8)
+
+```
