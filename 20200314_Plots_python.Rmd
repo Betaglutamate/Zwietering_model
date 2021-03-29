@@ -86,7 +86,8 @@ scale_color_manual(
              'M63_Gly_NaCl_37C_2021-02-10', #14
              'M63_Glu_NaCl_37C_2021-02-16', #15
              'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
-             'M63_Glu_NaCl_37C_2021-03-12' #17
+             'M63_Glu_NaCl_37C_2021-03-12', #17
+             'M63_Gly_NaCl_37C_2021-03-29' #18
              ),
   values=c(glycerol_green, #1
            gray_30, #2
@@ -104,7 +105,8 @@ scale_color_manual(
            glycerol_green, #14
            glucose_red, #15
            glucose_red, #16
-           glucose_red #17
+           glucose_red, #17
+           glycerol_green
            )
 )
 
@@ -127,7 +129,8 @@ scale_fill_manual(
              'M63_Gly_NaCl_37C_2021-02-10', #14
              'M63_Glu_NaCl_37C_2021-02-16', #15
              'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
-             'M63_Glu_NaCl_37C_2021-03-12'
+             'M63_Glu_NaCl_37C_2021-03-12', #17
+             'M63_Gly_NaCl_37C_2021-03-29' #18
              ),
   values=c(glycerol_green, #1
            protein_fill, #2
@@ -145,7 +148,8 @@ scale_fill_manual(
            glycerol_green, #14
            glucose_red, #15
            glucose_red, #16
-           glucose_red #17
+           glucose_red, #17
+           glycerol_green #18
            )
 )
   
@@ -167,7 +171,8 @@ graph_shape_scale <-
              'M63_Gly_NaCl_37C_2021-02-10', #14
              'M63_Glu_NaCl_37C_2021-02-16', #15
              'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
-             'M63_Glu_NaCl_37C_2021-03-12'
+             'M63_Glu_NaCl_37C_2021-03-12', #17
+             'M63_Gly_NaCl_37C_2021-03-29' #18
              ),
     values=c(sucrose_diamond, #1
              sucrose_diamond, #2
@@ -185,7 +190,8 @@ graph_shape_scale <-
              nacl_square, #14
              nacl_square, #15
              nacl_betaine, #16
-             nacl_square #17
+             nacl_square, #17
+             nacl_square #18
              )
     )
 
@@ -548,6 +554,7 @@ final_df_unique %>%
     graph_shape_scale
 
   ```
+  
 
   ```{r Plot20}
 
@@ -566,3 +573,20 @@ final_df_unique %>%
     graph_shape_scale
 
   ```
+  
+```{r Plot21}
+
+final_df_unique %>% 
+  filter(str_detect(experiment, 'Glu|Gly|Man')) %>% 
+  filter(str_detect(experiment, 'NaCl')) %>% 
+  ggplot(aes(y=MZ1_max_growth_rate, x=lag_time, color = experiment, shape = experiment, fill = experiment))+
+    geom_point(size=shape_size, stroke =stroke_size)+
+  
+    ggtitle("21 lag_phase vs growthrate")+
+    xlab("Lag time (hours)")+
+    ylab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
+    graph_theme+
+    graph_color_scale+
+    graph_fill_scale+
+    graph_shape_scale
+```

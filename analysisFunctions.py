@@ -69,7 +69,12 @@ def align_df(split_df, align_limit, **kwargs):
 
     filtered_new = split_df.loc[split_df['OD'] >
                                 od_filter_value].reset_index(drop=True)
+    
+    if not filtered_new.empty:
+        filtered_new.loc[:, "lag_time"] = filtered_new.loc[:, "Time"].values[0]
+
     filtered_new.loc[:, "Time"] = new_time[0:len(filtered_new)]
+
 
     return filtered_new
 

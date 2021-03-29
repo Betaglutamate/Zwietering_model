@@ -7,8 +7,6 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 
 
-experiment1 = re.run_experiment1()
-
 
 
 if __name__ == '__main__':
@@ -29,9 +27,9 @@ if __name__ == '__main__':
         experiment13 = executor.submit(re.run_experiment13)
         experiment14 = executor.submit(re.run_experiment14)
         experiment15 = executor.submit(re.run_experiment15)
-        experiment15 = executor.submit(re.run_experiment15)
         experiment16 = executor.submit(re.run_experiment16)
         experiment17 = executor.submit(re.run_experiment17)
+        experiment18 = executor.submit(re.run_experiment18)
 
     print("finished analysis")
 
@@ -52,7 +50,8 @@ if __name__ == '__main__':
         experiment14.result(),
         experiment15.result(),
         experiment16.result(),
-        experiment17.result()
+        experiment17.result(),
+        experiment18.result(),
     ]    
 
 
