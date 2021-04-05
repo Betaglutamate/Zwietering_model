@@ -40,7 +40,7 @@ def analyze_plate(filepath, alignment_value):
     # OK its in the long format now to align it to OD
 
     aligned_df_long = merged.groupby('variable').apply(
-        align_df, align_limit = alignment_value).reset_index(drop=True)
+        align_df, align_limit = 0).reset_index(drop=True)
 
     aligned_df_long.loc[:, 'Group'] = aligned_df_long['variable'].apply(
         lambda x: x[0:7])
@@ -163,15 +163,15 @@ def normalize_plate(path_to_excel):
     final_od = input_df_od
     # final_od_raw = final_od.astype('float')
 
-    first_row_od = input_df_od.iloc[0:100, 1:].min(axis=0)
+    first_row_od = input_df_od.iloc[0:10, 1:].mean(axis=0)
     final_od.iloc[:, 1:] = input_df_od.iloc[:, 1:].apply(
-        lambda row: row - first_row_od, axis=1)
+        lambda row: row - (first_row_od-0.005), axis=1)
     final_od = final_od.astype('float')
 
     final_gfp = input_df_gfp
     #final_gfp = final_gfp.astype('float')
 
-    first_row_gfp = input_df_gfp.iloc[0:100, 1:].min(axis=0)
+    first_row_gfp = input_df_gfp.iloc[0:10, 1:].mean(axis=0)
     final_gfp.iloc[:, 1:] = input_df_gfp.iloc[:, 1:].apply(
         lambda row: row - first_row_gfp, axis=1)
     final_gfp = final_gfp.astype('float')

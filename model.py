@@ -7,6 +7,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 from datetime import date
+from scipy.optimize import curve_fit
 
 
 class Experiment:
@@ -63,6 +64,7 @@ class Experiment:
                                data=analyzed_plate,
                                filter_value=self.filter_value,
                                length_exponential_phase=self.length_exponential_phase)
+            temp_plate.fit_df()
             temp_plate.calculate_max_growth_rate()
             temp_plate.subtract_wt()
             temp_plate.calculate_gfp_by_phase_mz1()
@@ -70,6 +72,7 @@ class Experiment:
             temp_plate.calculate_max_od_mz1()
             temp_plate.calculate_max_od_wt()
             temp_plate.add_max_values_to_df()
+
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
 
@@ -218,6 +221,57 @@ class Plate():
             save_string = f"lnOD_{df['Group'].values[0]}_{self.repeat_number}.png"
             gg.ggsave(LN_group_plot, os.path.join(
                 plot_path, save_string), verbose=False)
+
+    def zwietering_model(self, t, A, Kz, Tlag):
+        return  A*np.exp(-np.exp(((np.e*Kz)/A)*(Tlag-t)+1))
+
+        
+    def fit_df(self):
+        
+        names = []
+        gr = []
+        my = []
+        lt = []
+        
+        for name, df in self.data.groupby('variable'):
+
+
+            df['zwieter'] = (np.log(df['OD'] / (df['OD'].values[0])))
+            xData = df['Time']
+            yData = df['zwieter']
+            p0_test = [1, 0.8, 3]
+
+            popt, _ = curve_fit(f=self.zwietering_model, xdata=xData, ydata=yData, p0=p0_test, maxfev = 1000)
+
+
+            x_fit = np.arange(0, 100, 0.1)
+
+        #Plot the fitted function
+            plt.plot(x_fit, self.zwietering_model(x_fit, *popt), 'bo', markersize=1)
+            plt.plot(xData, yData, 'ro', markersize=1)
+            plt.xlim(0, 100)
+            plt.ylabel('ln(OD/OD0)')
+
+            plt.xlabel('Time')
+            plt.title(name)
+
+            plot_path = os.path.join(self.folder, "Experiment_plots")
+            Path(plot_path).mkdir(parents=True, exist_ok=True)
+
+            plt.savefig(f"{plot_path}/Zwietering_{name}.png")
+            plt.close()
+
+            growth_rate = popt[1]
+            max_yield = popt[0]
+            lag_time = popt[2]
+            max_yield = np.exp(max_yield)*df['OD'].values[0]
+
+            names.append(name)
+            lt.append(lag_time)
+            my.append(lag_time)
+            gr.append(growth_rate)
+            new_df = pd.DataFrame({"name": names, "gr":gr, "my":my, "lt": lt})
+            self.new_df = new_df
 
     def calculate_max_growth_rate(self):
 
@@ -618,3 +672,6 @@ class Plate():
         self.complete_df['MZ1_max_od'] = self.complete_df['MZ1_max_od'].map(self.max_od_mz1)
         self.complete_df['wt_max_od'] = self.complete_df['wt_variable']
         self.complete_df['wt_max_od'] = self.complete_df['wt_max_od'].map(self.max_od_wt)
+
+
+    

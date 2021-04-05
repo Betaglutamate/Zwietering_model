@@ -7,6 +7,9 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 
 
+experiment1 = re.run_experiment1()
+
+
 
 if __name__ == '__main__':
 
