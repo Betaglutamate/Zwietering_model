@@ -2,29 +2,13 @@ import run_plate as af
 from pathlib import Path
 import os
 import matplotlib.pyplot as plt
-import plotnine as gg
-import seaborn as sns
 import pandas as pd
 import numpy as np
-from datetime import date
 from scipy.optimize import curve_fit
-
+from scipy.stats import linregress
 
 
 class Experiment:
-
-    gg.theme_set(gg.theme_bw())
-    graph_theme = (
-        gg.theme(
-            plot_title=gg.element_text(face="bold", size=12),
-            legend_background=gg.element_rect(
-                fill="white", size=4, colour="white"),
-            axis_ticks=gg.element_line(colour="grey", size=0.3),
-            panel_grid_major=gg.element_line(colour="grey", size=0.3),
-            panel_grid_minor=gg.element_blank(),
-            text=gg.element_text(size=21)
-        )
-    )
 
     def __init__(self, media, solute, temperature, date, folder, plot=False):
         self.name = media
@@ -32,15 +16,11 @@ class Experiment:
         self.temperature = temperature
         self.date = date
         self.folder = folder
-        self.filter_value = 0.00025
+        self.filter_value = 0.01
         self.length_exponential_phase = 8
+        self.plot_bool=plot
         print(f"processing {self.name}")
         self.clean_data()
-
-        if plot == True:
-            self.generate_plots()
-            self.plot_gfp()
-            self.plot_max_values()
 
     def clean_data(self):
         files_to_analyze = []
@@ -63,18 +43,17 @@ class Experiment:
                                repeat_number=f"repeat_{num}",
                                data=analyzed_plate,
                                filter_value=self.filter_value,
-                               length_exponential_phase=self.length_exponential_phase)
+                               plot_bool= self.plot_bool)
             temp_plate.fit_df()
+            temp_plate.align_data()
+
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
-
-  
-
 
 
 class Plate():
 
-    def __init__(self, media, solute, temperature, date, folder, repeat_number, data, filter_value, length_exponential_phase):
+    def __init__(self, media, solute, temperature, date, folder, repeat_number, data, filter_value, plot_bool):
 
         self.name = media
         self.solute = solute
@@ -84,7 +63,7 @@ class Plate():
         self.repeat_number = repeat_number
         self.data = data
         self.filter_value = filter_value
-        self.length_exponential_phase = length_exponential_phase
+        self.plot = plot_bool
 
     def zwietering_model(self, t, A, Kz, Tlag):
         return  A*np.exp(-np.exp(((np.e*Kz)/A)*(Tlag-t)+1))
@@ -98,7 +77,6 @@ class Plate():
         
         for name, df in self.data.groupby('variable'):
 
-
             df['zwieter'] = (np.log(df['OD'] / (df['OD'].values[0])))
             xData = df['Time']
             yData = df['zwieter']
@@ -106,23 +84,8 @@ class Plate():
 
             popt, _ = curve_fit(f=self.zwietering_model, xdata=xData, ydata=yData, p0=p0_test, maxfev = 1000)
 
-
-            x_fit = np.arange(0, 100, 0.1)
-
-        #Plot the fitted function
-            plt.plot(x_fit, self.zwietering_model(x_fit, *popt), 'bo', markersize=1)
-            plt.plot(xData, yData, 'ro', markersize=1)
-            plt.xlim(0, 100)
-            plt.ylabel('ln(OD/OD0)')
-
-            plt.xlabel('Time')
-            plt.title(name)
-
-            plot_path = os.path.join(self.folder, "Experiment_plots")
-            Path(plot_path).mkdir(parents=True, exist_ok=True)
-
-            plt.savefig(f"{plot_path}/Zwietering_{name}.png")
-            plt.close()
+            if self.plot:
+                self.plot_fitted_df(xData, yData, popt, name)
 
             growth_rate = popt[1]
             max_yield = popt[0]
@@ -136,6 +99,105 @@ class Plate():
             new_df = pd.DataFrame({"name": names, "gr":gr, "my":my, "lt": lt})
             self.new_df = new_df
 
+    def plot_fitted_df(self, xData, yData, popt, name):
+        x_fit = np.arange(0, 100, 0.1)
+
+        #Plot the fitted function
+        fig, ax = plt.subplots()
+        plt.plot(x_fit, self.zwietering_model(x_fit, *popt), 'bo', markersize=1, label='fitted model')
+        plt.plot(xData, yData, 'ro', markersize=1, label = 'Data')
+        plt.xlim(0, 100)
+        plt.ylabel('ln(OD/OD0)')
+        plt.xlabel('Time')
+        plt.title(name)
+        ax.legend()
+
+        plot_path = os.path.join(self.folder, "Experiment_plots", "Zwietering")
+        Path(plot_path).mkdir(parents=True, exist_ok=True)
+
+        plt.savefig(f"{plot_path}/Zwietering_{name}.png")
+        plt.close()
+
+       
+    def align_data(self):
+        self.aligned_data = af.align_df(self.data, self.filter_value)
+    
+    def calculate_lag_phase(self, df):
+
+        annotated_df = []
+        df = df.copy()
+
+        for name, df in df.groupby('variable'):
+            current_values = self.new_df[self.new_df['name'] == name]
+            df['growth_phase'] = 'string'
+            df.loc[df['Time'] < current_values['lt'].values[0], 'growth_phase'] = 'lag_phase'
+            annotated_df.append(df)
+
+        annotated_df = pd.concat(annotated_df)
+
+        return annotated_df
+
+    def calculate_growth_rate(self, df):
+        window_size = 8
+        
+        annotated_df = []
+        df = df.copy()
+
+        for name, df in df.groupby('variable'):
+            regress_list = []
+            for length in range(len(df)):
+                res = linregress(
+                    x=df['Time'].values[length:length+window_size],
+                    y=df['log(OD)'].values[length:length+window_size]
+                )
+                regress_list.append(res.slope)
+
+            df['growth_rate'] = pd.Series(regress_list, index=df.index)
+            annotated_df.append(df)
+
+        growth_rate_calculated_df = pd.concat(
+            annotated_df).reset_index(drop=True)
+
+        return growth_rate_calculated_df
+    
+    def calculate_exponential_phase(self, df):
+
+        annotated_df = []
+        df = df.copy()
+
+        for name, df in df.groupby('variable'):
+            df_no_lag_phase = df[df['growth_phase'] != 'lag_phase']
+            end_lag_phase = df_no_lag_phase.index[0]+1
+            sorted_gr_index = np.argsort(df_no_lag_phase['growth_rate'].values)
+            sorted_gr = df_no_lag_phase['growth_rate'].values[sorted_gr_index]
+
+            sorted_gr = sorted_gr[~np.isnan(sorted_gr)]
+
+            max_growth_rate = np.mean(sorted_gr[-8:])
+            index_end_exponential_growth = np.where(df['growth_rate'] > max_growth_rate)[0][-1]
+
+            df.loc[end_lag_phase:index_end_exponential_growth, 'growth_phase'] = 'exponential_phase'
+            annotated_df.append(df)
+
+        annotated_df = pd.concat(annotated_df)
+        return annotated_df
+
+
+    def calculate_growth_phase(self):
+        self.data = self.calculate_lag_phase(self.data)
+        self.data = self.calculate_growth_rate(self.data)
+        self.data = self.calculate_exponential_phase(self.data)
+
+        
+
+        #then go from the end of lag phase to the biggest growth_rate
+    
+        # I need to try and predict the following
+        
+        # exponential phase will be tlag+ points until the growth rate decreases below the predicted GR
+        # post exponential phase will be everything after
+        # #stationary will be  when growhtrate falls under 0.01 or something
+        #  
 
 
 experiment8 = Experiment(media='M63_Glu',
@@ -144,3 +206,6 @@ experiment8 = Experiment(media='M63_Glu',
                                 date='2020-10-23',
                                 folder='Data/20201023_m63Glu_37C_Sucrose',
                                 plot=False)
+
+experiment8.list_of_repeats[0].calculate_growth_phase()
+experiment8.list_of_repeats[0].data[50:100]

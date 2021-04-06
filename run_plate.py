@@ -127,3 +127,26 @@ def calculate_regression(df, window_size=8):
         reconstructed_df).reset_index(drop=True)
 
     return growth_rate_calculated_df
+
+def align_df(df, align_limit, **kwargs):
+        """
+        This function takes a single experiment and aligns it
+        """
+        rebuilt_df = []
+
+        for name, df in df.groupby('variable'):
+
+            new_time = df["Time"].values
+            st_dev = np.std(df['OD'].iloc[0:10])
+            mean = np.mean(df['OD'].iloc[0:10])
+            
+            #od_filter_value = (mean+(st_dev*5))
+            od_filter_value = align_limit
+
+            filtered_new = df[df['OD'] > od_filter_value].reset_index(drop=True).copy()
+            filtered_new["Time"] = new_time[0:len(filtered_new)]
+            rebuilt_df.append(filtered_new)
+        
+        aligned_df = pd.concat(rebuilt_df).reset_index(drop=True)
+   
+        return aligned_df
