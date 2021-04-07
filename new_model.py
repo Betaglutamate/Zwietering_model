@@ -4,6 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import seaborn as sns
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
 
@@ -45,7 +46,15 @@ class Experiment:
                                filter_value=self.filter_value,
                                plot_bool= self.plot_bool)
             temp_plate.fit_df()
+            temp_plate.calculate_growth_phase()
+
+            if self.plot_bool:
+                temp_plate.visualize_growth_rate()
+
             temp_plate.align_data()
+
+            
+            
 
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
@@ -166,38 +175,65 @@ class Plate():
         df = df.copy()
 
         for name, df in df.groupby('variable'):
+
             df_no_lag_phase = df[df['growth_phase'] != 'lag_phase']
-            end_lag_phase = df_no_lag_phase.index[0]+1
+            end_lag_phase = df_no_lag_phase.index[0]-1
             sorted_gr_index = np.argsort(df_no_lag_phase['growth_rate'].values)
             sorted_gr = df_no_lag_phase['growth_rate'].values[sorted_gr_index]
 
             sorted_gr = sorted_gr[~np.isnan(sorted_gr)]
 
             max_growth_rate = np.mean(sorted_gr[-8:])
-            index_end_exponential_growth = np.where(df['growth_rate'] > max_growth_rate)[0][-1]
+            index_end_exponential_growth = df[df['growth_rate'] > max_growth_rate].index[-1]
 
             df.loc[end_lag_phase:index_end_exponential_growth, 'growth_phase'] = 'exponential_phase'
             annotated_df.append(df)
 
         annotated_df = pd.concat(annotated_df)
         return annotated_df
+    
+    def calculate_post_exponential_phase(self, df):
+        annotated_df = []
+        df = df.copy()
+        for name, df in df.groupby('variable'):
+            df_end_exponential_index = df[df['growth_phase'] == 'exponential_phase']
+            
+            if not df_end_exponential_index.empty:
+                df_end_exponential_index = df_end_exponential_index.index[-1] + 1 
+            
 
+            df_start_stationary = df[(df['OD']> 0.05) & (df['growth_rate'] < 0.01)]
+            if not df_start_stationary.empty:
+                df_start_stationary = df_start_stationary.index[0]
+                df.loc[df_start_stationary:, 'growth_phase'] = "stationary"
+            else:
+                df_start_stationary = df.index[-1]
+            
+            df.loc[df_end_exponential_index:df_start_stationary, 'growth_phase'] = "post-exponential"
+            
+            annotated_df.append(df)
+        
+        annotated_df = pd.concat(annotated_df)
+        return annotated_df
+    
 
     def calculate_growth_phase(self):
         self.data = self.calculate_lag_phase(self.data)
         self.data = self.calculate_growth_rate(self.data)
         self.data = self.calculate_exponential_phase(self.data)
+        self.data = self.calculate_post_exponential_phase(self.data)
+        # self.data = self.calculate_stationary_phase(self.data)
 
-        
+    def visualize_growth_rate(self):
+        fig, ax = plt.subplots()
+        sns.scatterplot(data = df, x='Time', y='log(OD)', hue='growth_phase', ax=ax)
+        plot_path = os.path.join(self.folder, "Experiment_plots", "growth_phase")
+        Path(plot_path).mkdir(parents=True, exist_ok=True)
+        ax.set_title(self.name)
+        plt.savefig(f"{plot_path}/growth_phase.png")
+        plt.close()
 
-        #then go from the end of lag phase to the biggest growth_rate
-    
-        # I need to try and predict the following
-        
-        # exponential phase will be tlag+ points until the growth rate decreases below the predicted GR
-        # post exponential phase will be everything after
-        # #stationary will be  when growhtrate falls under 0.01 or something
-        #  
+# now that I have the data I need I will align the dataframes then split them up
 
 
 experiment8 = Experiment(media='M63_Glu',
@@ -207,5 +243,9 @@ experiment8 = Experiment(media='M63_Glu',
                                 folder='Data/20201023_m63Glu_37C_Sucrose',
                                 plot=False)
 
-experiment8.list_of_repeats[0].calculate_growth_phase()
+
 experiment8.list_of_repeats[0].data[50:100]
+df = experiment8.list_of_repeats[0].data
+import seaborn as sns
+
+sns.scatterplot(data = df, x='Time', y='log(OD)', hue='growth_phase')
