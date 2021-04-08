@@ -101,32 +101,12 @@ def analyze_plate(filepath, alignment_value):
     merged['GFP/OD'] = merged['GFP'] / merged['OD']
     merged['log(OD)'] = np.log(merged['OD'] / merged['OD'].values[0])
 
-    aligned_df_long = calculate_regression(merged)
+    analyzed_plate = merged
 
-    return aligned_df_long
+    return analyzed_plate
 
 
-def calculate_regression(df, window_size=8):
 
-    reconstructed_df = []
-
-    for name, df in df.groupby('variable'):
-        df = df.copy()
-        regress_list = []
-        for length in range(len(df)):
-            res = stats.linregress(
-                x=df['Time'].values[length:length+window_size],
-                y=df['log(OD)'].values[length:length+window_size]
-            )
-            regress_list.append(res.slope)
-
-        df['GrowthRate'] = pd.Series(regress_list, index=df.index)
-        reconstructed_df.append(df)
-
-    growth_rate_calculated_df = pd.concat(
-        reconstructed_df).reset_index(drop=True)
-
-    return growth_rate_calculated_df
 
 def align_df(df, align_limit, **kwargs):
         """

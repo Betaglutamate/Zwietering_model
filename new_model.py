@@ -234,6 +234,13 @@ class Plate():
         plt.close()
 
 # now that I have the data I need I will align the dataframes then split them up
+    def split_data_frames(self, df):
+        df_gfp = df[df['Group'].str[0:2] == 'MZ'].reset_index(drop=True).add_prefix("mz1_")
+        cols_to_drop = ['Time', 'GFP/OD', 'Group', 'osmolarity', 'variable'] # I am dropping these because they are identical between dataframes.
+        df_wt = df[df['Group'].str[0:2] == 'WT'].drop(columns= cols_to_drop).reset_index(drop=True).add_prefix("wt_")
+
+
+        merged_df = pd.concat([df_gfp, df_wt], axis=1)
 
 
 experiment8 = Experiment(media='M63_Glu',
