@@ -52,6 +52,8 @@ class Experiment:
                 temp_plate.visualize_growth_rate()
 
             temp_plate.align_data()
+            temp_plate.subtract_wt()
+            
 
             
             
@@ -84,7 +86,11 @@ class Plate():
         my = []
         lt = []
         
+        fit_df = []
+
         for name, df in self.data.groupby('variable'):
+
+            df = df.copy()
 
             df['zwieter'] = (np.log(df['OD'] / (df['OD'].values[0])))
             xData = df['Time']
@@ -103,10 +109,18 @@ class Plate():
 
             names.append(name)
             lt.append(lag_time)
-            my.append(lag_time)
+            my.append(max_yield)
             gr.append(growth_rate)
             new_df = pd.DataFrame({"name": names, "gr":gr, "my":my, "lt": lt})
             self.new_df = new_df
+
+            df['lag_time'] = lag_time
+            df['max_yield'] = max_yield
+            df['max_growth_rate'] = growth_rate
+            df = df.drop('zwieter', axis=1)
+            fit_df.append(df)
+        
+        self.data = pd.concat(fit_df)
 
     def plot_fitted_df(self, xData, yData, popt, name):
         x_fit = np.arange(0, 100, 0.1)
@@ -235,12 +249,39 @@ class Plate():
 
 # now that I have the data I need I will align the dataframes then split them up
     def split_data_frames(self, df):
-        df_gfp = df[df['Group'].str[0:2] == 'MZ'].reset_index(drop=True).add_prefix("mz1_")
-        cols_to_drop = ['Time', 'GFP/OD', 'Group', 'osmolarity', 'variable'] # I am dropping these because they are identical between dataframes.
+        df_mz = df[df['Group'].str[0:2] == 'MZ'].reset_index(drop=True).add_prefix("mz1_")
+        cols_to_drop = ['Time', 'osmolarity'] # I am dropping these because they are identical between dataframes.
         df_wt = df[df['Group'].str[0:2] == 'WT'].drop(columns= cols_to_drop).reset_index(drop=True).add_prefix("wt_")
+        return df_wt, df_mz
 
+    def subtract_wt(self):
+        # Now I should split self.data into containing MZ and WT
+        wt_df, mz_df = self.split_data_frames(self.aligned_data)
 
-        merged_df = pd.concat([df_gfp, df_wt], axis=1)
+        subtracted_df = []
+        for wt_name, wt_df_loop in wt_df.groupby('wt_variable'):
+            print(wt_name)
+            for mz_name, mz_df_loop in mz_df.groupby('mz1_variable'):
+                if mz_name[-6:] == wt_name[-6:]:
+                    print(f"{mz_name} matches {wt_name}")
+                    mz_df_loop = mz_df_loop.reset_index(drop=True).copy()
+                    wt_df_loop = wt_df_loop.reset_index(drop=True).copy()
+                    subtract_col = mz_df_loop['mz1_GFP/OD'] - wt_df_loop['wt_GFP/OD']
+                    mz_df_loop['normalised_GFP/OD'] = subtract_col
+                    mz_df_loop['wt_OD'] = wt_df_loop['wt_OD']
+                    mz_df_loop['wt_variable'] = wt_df_loop['wt_variable']
+                    mz_df_loop['wt_GFP'] = wt_df_loop['wt_GFP']
+                    mz_df_loop['wt_log(OD)'] = wt_df_loop['wt_log(OD)']
+                    mz_df_loop['wt_growth_rate'] = wt_df_loop['wt_growth_rate']
+                    mz_df_loop['wt_Group'] = wt_df_loop['wt_Group']
+                    mz_df_loop['wt_lag_time'] = wt_df_loop['wt_lag_time']
+                    mz_df_loop['wt_max_growth_rate'] = wt_df_loop['wt_max_growth_rate']
+                    mz_df_loop['wt_max_yield'] = wt_df_loop['wt_max_yield']
+                    subtracted_df.append(mz_df_loop)
+        self.normalized_df = pd.concat(
+            subtracted_df).dropna().reset_index(drop=True)
+        
+    
 
 
 experiment8 = Experiment(media='M63_Glu',
@@ -251,8 +292,19 @@ experiment8 = Experiment(media='M63_Glu',
                                 plot=False)
 
 
-experiment8.list_of_repeats[0].data[50:100]
+
 df = experiment8.list_of_repeats[0].data
-import seaborn as sns
 
 sns.scatterplot(data = df, x='Time', y='log(OD)', hue='growth_phase')
+
+
+df_gfp = df[df['Group'].str[0:2] == 'MZ'].reset_index(drop=True).add_prefix("mz1_")
+cols_to_drop = ['Time', 'GFP/OD', 'Group', 'osmolarity', 'variable'] # I am dropping these because they are identical between dataframes.
+df_wt = df[df['Group'].str[0:2] == 'WT'].drop(columns= cols_to_drop).reset_index(drop=True).add_prefix("wt_")
+
+
+merged_df = pd.concat([df_gfp, df_wt], axis=1)
+
+df = experiment8.list_of_repeats[0]
+
+df.normalized_df.groupby('mz1_variable').mean()['normalised_GFP/OD'].plot.('mz1_variable')
