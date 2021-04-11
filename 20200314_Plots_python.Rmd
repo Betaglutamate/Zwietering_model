@@ -24,10 +24,10 @@ final_df <- read.csv('final_df.csv')
 
 final_df_unique <- 
   final_df %>%
-  distinct(experiment, repeat., variable, osmolarity, .keep_all = TRUE)
+  distinct(experiment, repeat., mz1_variable, mz1_osmolarity, .keep_all = TRUE)
 
 final_df_unique %>% 
-select(experiment, osmolarity, MZ1_max_growth_rate, MZ1_max_od, MZ1_max_gfp, wt_max_growth_rate, wt_max_od,)
+select(experiment, mz1_osmolarity, mz1_max_growth_rate, mz1_max_yield, wt_max_growth_rate, wt_max_yield)
 ```
 
 ```{r set_graph_settings}

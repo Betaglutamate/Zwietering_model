@@ -99,13 +99,11 @@ def analyze_plate(filepath, alignment_value):
 
     merged['Group'] = merged['variable'].str[0:7]
     merged['GFP/OD'] = merged['GFP'] / merged['OD']
-    merged['log(OD)'] = np.log(merged['OD'] / merged['OD'].values[0])
+    merged['log(OD)'] = np.log(merged['OD'] / np.mean(merged['OD'].values[0:10]))
 
     analyzed_plate = merged
 
     return analyzed_plate
-
-
 
 
 def align_df(df, align_limit, **kwargs):

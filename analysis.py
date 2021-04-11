@@ -7,10 +7,6 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 
 
-experiment1 = re.run_experiment1()
-
-
-
 if __name__ == '__main__':
 
     with ProcessPoolExecutor(max_workers=5) as executor:
@@ -72,7 +68,7 @@ if __name__ == '__main__':
 
 # experiment1 = re.run_experiment1()
 # experiment2 = re.run_experiment2()
-# experiment3 = re.run_experiment3() #error m63glucaa
+# experiment3 = re.run_experiment3() 
 # experiment4 = re.run_experiment4()
 # experiment5 = re.run_experiment5()
 # experiment6 = re.run_experiment6()
@@ -80,10 +76,12 @@ if __name__ == '__main__':
 # experiment8 = re.run_experiment8()
 # experiment9 = re.run_experiment9()
 # experiment10 = re.run_experiment10()
-# experiment11 = re.run_experiment11() #error rdm
+# experiment11 = re.run_experiment11() 
 # experiment12 = re.run_experiment12()
 # experiment13 = re.run_experiment13()
-# experiment14 = re.run_experiment14()
+# experiment14 = re.run_experiment14() #error
 # experiment15 = re.run_experiment15()
 # experiment15 = re.run_experiment15()
 # experiment16 = re.run_experiment16()
+# experiment17 = re.run_experiment17()
+# experiment18 = re.run_experiment18()

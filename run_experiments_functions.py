@@ -1,6 +1,6 @@
-import model
+import new_model as model
 
-plot_graphs = False
+plot_graphs = True
 
 def run_experiment1():
     experiment1 = model.Experiment(media='M63_Gly',

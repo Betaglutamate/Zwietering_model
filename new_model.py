@@ -5,11 +5,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import seaborn as sns
+import plotnine as gg
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
 
 
 class Experiment:
+
 
     def __init__(self, media, solute, temperature, date, folder, plot=False):
         self.name = media
@@ -53,14 +55,43 @@ class Experiment:
 
             temp_plate.align_data()
             temp_plate.subtract_wt()
-            
-
-            
-            
-
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
+            self.combine_all_repeats()
 
+        if self.plot_bool:
+            self.plot_experiment()
+
+    def combine_all_repeats(self):
+        all_dfs = []
+        for repeat in self.list_of_repeats:
+            repeat_name = repeat.repeat_number
+            repeat.normalized_df.loc[:, 'repeat'] = repeat_name
+            all_dfs.append(repeat.normalized_df)
+
+        self.experiment_df = pd.concat(all_dfs).reset_index(drop=True)
+
+    def plot_experiment(self):
+
+        plot_path = os.path.join(self.folder, "Experiment_plots")
+        Path(plot_path).mkdir(parents=True, exist_ok=True)
+
+        gfp_df = self.experiment_df
+
+        gfp_boxplot = sns.boxplot(x="mz1_osmolarity", y="normalised_GFP/OD",
+                                  saturation=0.9, dodge=False, hue='mz1_growth_phase', data=gfp_df)
+        for patch in gfp_boxplot.artists:
+            r, g, b, a = patch.get_facecolor()
+            patch.set_facecolor((r, g, b, .6))
+
+        figure = gfp_boxplot.get_figure()
+        plot_path = os.path.join(self.folder, "Experiment_plots")
+
+        save_string = f"GFP_boxplot_{self.name}.png"
+        save_path = os.path.join(plot_path, save_string)
+
+        figure.savefig(save_path, dpi=400)
+        plt.close()
 
 class Plate():
 
@@ -90,35 +121,41 @@ class Plate():
 
         for name, df in self.data.groupby('variable'):
 
-            df = df.copy()
+            df = df.copy().reset_index(drop=True)
 
-            df['zwieter'] = (np.log(df['OD'] / (df['OD'].values[0])))
-            xData = df['Time']
-            yData = df['zwieter']
-            p0_test = [1, 0.8, 3]
 
-            popt, _ = curve_fit(f=self.zwietering_model, xdata=xData, ydata=yData, p0=p0_test, maxfev = 1000)
+            baseline = np.mean(df['OD'].values[0:10])
+            df['zwieter'] = (np.log(df['OD'] / baseline))
+            df = df[np.isfinite(df['zwieter'])] 
+            if not df.empty:
+                xData = df['Time']
+                yData = df['zwieter']
+                p0_test = [1, 0.8, 3]
+                try:
+                    popt, _ = curve_fit(f=self.zwietering_model, xdata=xData, ydata=yData, p0=p0_test, maxfev = 10000)
+                except RuntimeError:
+                    popt = [0.01,0.01,0.01]
 
-            if self.plot:
-                self.plot_fitted_df(xData, yData, popt, name)
+                if self.plot:
+                    self.plot_fitted_df(xData, yData, popt, name)
 
-            growth_rate = popt[1]
-            max_yield = popt[0]
-            lag_time = popt[2]
-            max_yield = np.exp(max_yield)*df['OD'].values[0]
+                growth_rate = popt[1]
+                max_yield = popt[0]
+                lag_time = popt[2]
+                max_yield = np.exp(max_yield)*df['OD'].values[0]
 
-            names.append(name)
-            lt.append(lag_time)
-            my.append(max_yield)
-            gr.append(growth_rate)
-            new_df = pd.DataFrame({"name": names, "gr":gr, "my":my, "lt": lt})
-            self.new_df = new_df
+                names.append(name)
+                lt.append(lag_time)
+                my.append(max_yield)
+                gr.append(growth_rate)
+                new_df = pd.DataFrame({"name": names, "gr":gr, "my":my, "lt": lt})
+                self.new_df = new_df
 
-            df['lag_time'] = lag_time
-            df['max_yield'] = max_yield
-            df['max_growth_rate'] = growth_rate
-            df = df.drop('zwieter', axis=1)
-            fit_df.append(df)
+                df['lag_time'] = lag_time
+                df['max_yield'] = max_yield
+                df['max_growth_rate'] = growth_rate
+                df = df.drop('zwieter', axis=1)
+                fit_df.append(df)
         
         self.data = pd.concat(fit_df)
 
@@ -138,7 +175,7 @@ class Plate():
         plot_path = os.path.join(self.folder, "Experiment_plots", "Zwietering")
         Path(plot_path).mkdir(parents=True, exist_ok=True)
 
-        plt.savefig(f"{plot_path}/Zwietering_{name}.png")
+        plt.savefig(f"{plot_path}/{self.repeat_number}_Zwietering_{name}.png")
         plt.close()
 
        
@@ -189,24 +226,28 @@ class Plate():
         df = df.copy()
 
         for name, df in df.groupby('variable'):
-
             df_no_lag_phase = df[df['growth_phase'] != 'lag_phase']
-            end_lag_phase = df_no_lag_phase.index[0]-1
-            sorted_gr_index = np.argsort(df_no_lag_phase['growth_rate'].values)
-            sorted_gr = df_no_lag_phase['growth_rate'].values[sorted_gr_index]
+            if not df_no_lag_phase.empty:
+                end_lag_phase = df_no_lag_phase.index[0]-1
+                sorted_gr_index = np.argsort(df_no_lag_phase['growth_rate'].values)
+                sorted_gr = df_no_lag_phase['growth_rate'].values[sorted_gr_index]
 
-            sorted_gr = sorted_gr[~np.isnan(sorted_gr)]
+                sorted_gr = sorted_gr[~np.isnan(sorted_gr)]
 
-            max_growth_rate = np.mean(sorted_gr[-8:])
-            index_end_exponential_growth = df[df['growth_rate'] > max_growth_rate].index[-1]
+                max_growth_rate = np.mean(sorted_gr[-8:])
+                try:
+                    index_end_exponential_growth = df[df['growth_rate'] > max_growth_rate].index[-1]
+                except IndexError:
+                    index_end_exponential_growth = len(df.index)
 
-            df.loc[end_lag_phase:index_end_exponential_growth, 'growth_phase'] = 'exponential_phase'
-            annotated_df.append(df)
+                df.loc[end_lag_phase:index_end_exponential_growth, 'growth_phase'] = 'exponential_phase'
+                annotated_df.append(df)
 
         annotated_df = pd.concat(annotated_df)
         return annotated_df
     
     def calculate_post_exponential_phase(self, df):
+        
         annotated_df = []
         df = df.copy()
         for name, df in df.groupby('variable'):
@@ -222,10 +263,11 @@ class Plate():
                 df.loc[df_start_stationary:, 'growth_phase'] = "stationary"
             else:
                 df_start_stationary = df.index[-1]
-            
-            df.loc[df_end_exponential_index:df_start_stationary, 'growth_phase'] = "post-exponential"
-            
-            annotated_df.append(df)
+            try:
+                df.loc[df_end_exponential_index:df_start_stationary, 'growth_phase'] = "post-exponential"
+                annotated_df.append(df)
+            except TypeError:
+                print(f"typerror {name}")
         
         annotated_df = pd.concat(annotated_df)
         return annotated_df
@@ -239,13 +281,15 @@ class Plate():
         # self.data = self.calculate_stationary_phase(self.data)
 
     def visualize_growth_rate(self):
-        fig, ax = plt.subplots()
-        sns.scatterplot(data = df, x='Time', y='log(OD)', hue='growth_phase', ax=ax)
-        plot_path = os.path.join(self.folder, "Experiment_plots", "growth_phase")
-        Path(plot_path).mkdir(parents=True, exist_ok=True)
-        ax.set_title(self.name)
-        plt.savefig(f"{plot_path}/growth_phase.png")
-        plt.close()
+
+        for name, df in self.data.groupby('Group'):
+            fig, ax = plt.subplots()
+            sns.scatterplot(data = df, x='Time', y='log(OD)', hue='growth_phase', ax=ax)
+            plot_path = os.path.join(self.folder, "Experiment_plots", "growth_phase")
+            Path(plot_path).mkdir(parents=True, exist_ok=True)
+            ax.set_title(name)
+            plt.savefig(f"{os.path.join(plot_path, name)}_{self.repeat_number}.png")
+            plt.close()
 
 # now that I have the data I need I will align the dataframes then split them up
     def split_data_frames(self, df):
@@ -260,10 +304,8 @@ class Plate():
 
         subtracted_df = []
         for wt_name, wt_df_loop in wt_df.groupby('wt_variable'):
-            print(wt_name)
             for mz_name, mz_df_loop in mz_df.groupby('mz1_variable'):
                 if mz_name[-6:] == wt_name[-6:]:
-                    print(f"{mz_name} matches {wt_name}")
                     mz_df_loop = mz_df_loop.reset_index(drop=True).copy()
                     wt_df_loop = wt_df_loop.reset_index(drop=True).copy()
                     subtract_col = mz_df_loop['mz1_GFP/OD'] - wt_df_loop['wt_GFP/OD']
@@ -281,30 +323,7 @@ class Plate():
         self.normalized_df = pd.concat(
             subtracted_df).dropna().reset_index(drop=True)
         
-    
+    def calculate_max_gfp(self, df):
+        df = df.copy()
 
-
-experiment8 = Experiment(media='M63_Glu',
-                                solute='Sucrose',
-                                temperature='37',
-                                date='2020-10-23',
-                                folder='Data/20201023_m63Glu_37C_Sucrose',
-                                plot=False)
-
-
-
-df = experiment8.list_of_repeats[0].data
-
-sns.scatterplot(data = df, x='Time', y='log(OD)', hue='growth_phase')
-
-
-df_gfp = df[df['Group'].str[0:2] == 'MZ'].reset_index(drop=True).add_prefix("mz1_")
-cols_to_drop = ['Time', 'GFP/OD', 'Group', 'osmolarity', 'variable'] # I am dropping these because they are identical between dataframes.
-df_wt = df[df['Group'].str[0:2] == 'WT'].drop(columns= cols_to_drop).reset_index(drop=True).add_prefix("wt_")
-
-
-merged_df = pd.concat([df_gfp, df_wt], axis=1)
-
-df = experiment8.list_of_repeats[0]
-
-df.normalized_df.groupby('mz1_variable').mean()['normalised_GFP/OD'].plot.('mz1_variable')
+        for name, df in df.groupby('')
