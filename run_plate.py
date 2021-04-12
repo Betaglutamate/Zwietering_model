@@ -20,7 +20,7 @@ def convert_time_to_hours(df):
     return df
 
 
-def load_plate(path_to_excel):
+def load_plate(path_to_excel, label):
     """
     This function takes in the path_to_excel file and outputs the normalized GFP and OD values as a dict
     """
@@ -52,10 +52,14 @@ def load_plate(path_to_excel):
 
     # Now we need to name the columns correctly
     # Here I call the column names saved in a csv and create a list from them named colNames
-
-    with open('Data/01_helper_data/platereaderLayout.csv', newline='') as f:
-        reader = csv.reader(f)
-        data = list(reader)
+    if label == 'standard':
+        with open('Data/01_helper_data/platereaderLayout.csv', newline='') as f:
+            reader = csv.reader(f)
+            data = list(reader)
+    elif label == '100-600':
+        with open('Data/01_helper_data/platereaderLayout100to600.csv', newline='') as f:
+            reader = csv.reader(f)
+            data = list(reader)
 
     col_names = data[0]
 
@@ -72,9 +76,9 @@ def load_plate(path_to_excel):
     return {"OD": final_od, "GFP": final_gfp, "osmolarity": osmolarity_values}
 
 
-def analyze_plate(filepath, alignment_value):
+def analyze_plate(filepath, alignment_value, label):
 
-    plate_normalized = load_plate(filepath)
+    plate_normalized = load_plate(filepath, label)
 
     time = 'Time'
     # Align the dataframe to a specific value for individual values

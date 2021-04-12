@@ -154,7 +154,8 @@ def run_experiment17():
                                 temperature='37',
                                 date='2021-03-12',
                                 folder='Data/20210312_m63Glu_37C_NaCl',
-                                plot=plot_graphs)
+                                plot=plot_graphs,
+                                label = '100-600')
     return run_experiment17
 
 def run_experiment18():
@@ -163,5 +164,6 @@ def run_experiment18():
                                 temperature='37',
                                 date='2021-03-29',
                                 folder='Data/20210329_m63Gly_37C_NaCl',
-                                plot=plot_graphs)
+                                plot=plot_graphs,
+                                label = '100-600')
     return run_experiment18
