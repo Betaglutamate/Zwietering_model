@@ -55,9 +55,13 @@ class Experiment:
 
             temp_plate.align_data()
             temp_plate.subtract_wt()
+            temp_plate.calculate_max_gfp()
             list_of_repeats.append(temp_plate)
             self.list_of_repeats = list_of_repeats
-            self.combine_all_repeats()
+        
+        #combine the repeats outside of loop
+        self.combine_all_repeats()
+
 
         if self.plot_bool:
             self.plot_experiment()
@@ -66,8 +70,8 @@ class Experiment:
         all_dfs = []
         for repeat in self.list_of_repeats:
             repeat_name = repeat.repeat_number
-            repeat.normalized_df.loc[:, 'repeat'] = repeat_name
-            all_dfs.append(repeat.normalized_df)
+            repeat.final_df.loc[:, 'repeat'] = repeat_name
+            all_dfs.append(repeat.final_df)
 
         self.experiment_df = pd.concat(all_dfs).reset_index(drop=True)
 
@@ -136,8 +140,19 @@ class Plate():
                 except RuntimeError:
                     popt = [0.01,0.01,0.01]
 
+                 ##checck goodness of fit with rsquared here turn this intoa function
+                residuals = yData- self.zwietering_model(xData, *popt)
+                ss_res = np.sum(residuals**2)
+                ss_tot = np.sum((yData-np.mean(yData))**2)
+                r_squared = 1 - (ss_res / ss_tot)
+                if r_squared < 0.95:
+                    popt = [0.01,0.01,0.01]
+
                 if self.plot:
                     self.plot_fitted_df(xData, yData, popt, name)
+
+
+
 
                 growth_rate = popt[1]
                 max_yield = popt[0]
@@ -323,7 +338,15 @@ class Plate():
         self.normalized_df = pd.concat(
             subtracted_df).dropna().reset_index(drop=True)
         
-    def calculate_max_gfp(self, df):
-        df = df.copy()
-
-        for name, df in df.groupby('')
+    def calculate_max_gfp(self):
+        full_df = self.normalized_df.copy()
+        
+        max_gfp_df = []
+        for name, df in full_df.groupby('mz1_variable'):
+            df_gfp_exponential = df[(df['mz1_growth_phase']=='exponential_phase')]
+            df['max_gfp'] = df_gfp_exponential['normalised_GFP/OD'].mean()
+            df['auc_gfp'] = np.trapz(df_gfp_exponential['normalised_GFP/OD'], df_gfp_exponential['mz1_Time'], dx=1.0, axis=-1)
+            
+            max_gfp_df.append(df)
+        
+        self.final_df = pd.concat(max_gfp_df)
