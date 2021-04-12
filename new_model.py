@@ -296,6 +296,7 @@ class Plate():
         # self.data = self.calculate_stationary_phase(self.data)
 
     def visualize_growth_rate(self):
+        sns.set_style("whitegrid")
 
         for name, df in self.data.groupby('Group'):
             fig, ax = plt.subplots()
@@ -303,6 +304,7 @@ class Plate():
             plot_path = os.path.join(self.folder, "Experiment_plots", "growth_phase")
             Path(plot_path).mkdir(parents=True, exist_ok=True)
             ax.set_title(name)
+            ax.set_xlim(0, 80)
             plt.savefig(f"{os.path.join(plot_path, name)}_{self.repeat_number}.png")
             plt.close()
 
