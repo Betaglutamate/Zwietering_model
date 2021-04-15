@@ -20,7 +20,7 @@ library(stringr)
 
 ```{r load_dataframe}
 
-final_df <- read.csv('final_df.csv')
+final_df <- read.csv('../final_df.csv')
 
 final_df_unique <- 
   final_df %>%
@@ -87,7 +87,8 @@ scale_color_manual(
              'M63_Glu_NaCl_37C_2021-02-16', #15
              'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
              'M63_Glu_NaCl_37C_2021-03-12', #17
-             'M63_Gly_NaCl_37C_2021-03-29' #18
+             'M63_Gly_NaCl_37C_2021-03-29', #18
+             'M63_Gly_NaCl_37C_2021-04-06' #19
              ),
   values=c(glycerol_green, #1
            gray_30, #2
@@ -106,7 +107,8 @@ scale_color_manual(
            glucose_red, #15
            glucose_red, #16
            glucose_red, #17
-           glycerol_green
+           glycerol_green, #18
+           glycerol_green #19
            )
 )
 
@@ -130,7 +132,8 @@ scale_fill_manual(
              'M63_Glu_NaCl_37C_2021-02-16', #15
              'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
              'M63_Glu_NaCl_37C_2021-03-12', #17
-             'M63_Gly_NaCl_37C_2021-03-29' #18
+             'M63_Gly_NaCl_37C_2021-03-29', #18
+             'M63_Gly_NaCl_37C_2021-04-06' #19
              ),
   values=c(glycerol_green, #1
            protein_fill, #2
@@ -149,7 +152,8 @@ scale_fill_manual(
            glucose_red, #15
            glucose_red, #16
            glucose_red, #17
-           glycerol_green #18
+           glycerol_green, #18
+           glycerol_green #19
            )
 )
   
@@ -172,7 +176,8 @@ graph_shape_scale <-
              'M63_Glu_NaCl_37C_2021-02-16', #15
              'M63_Glu_Betaine_NaCl_37C_2021-02-24', #16
              'M63_Glu_NaCl_37C_2021-03-12', #17
-             'M63_Gly_NaCl_37C_2021-03-29' #18
+             'M63_Gly_NaCl_37C_2021-03-29', #18
+             'M63_Gly_NaCl_37C_2021-04-06' #19
              ),
     values=c(sucrose_diamond, #1
              sucrose_diamond, #2
@@ -191,7 +196,8 @@ graph_shape_scale <-
              nacl_square, #15
              nacl_betaine, #16
              nacl_square, #17
-             nacl_square #18
+             nacl_square, #18
+             nacl_square #19
              )
     )
 

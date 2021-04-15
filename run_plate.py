@@ -95,7 +95,8 @@ def analyze_plate(filepath, alignment_value, label):
 
     osmolarity = plate_normalized['osmolarity'].set_index('Group')
     osmolarity_dict = osmolarity.to_dict()
-
+    
+    
     merged['osmolarity'] = merged['variable'].str[3:7].astype(float)
     merged['osmolarity'] = merged['osmolarity'].map(
         osmolarity_dict['osmolarity'])

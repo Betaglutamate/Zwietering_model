@@ -280,9 +280,10 @@ class Plate():
         for name, df in df.groupby('variable'):
             df_end_exponential_index = df[df['growth_phase']
                                           == 'exponential_phase']
-
             if not df_end_exponential_index.empty:
                 df_end_exponential_index = df_end_exponential_index.index[-1] + 1
+
+
 
             df_start_stationary = df[(df['OD'] > 0.05) & (
                 df['growth_rate'] < 0.01)]

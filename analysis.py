@@ -6,8 +6,6 @@ import datetime
 warnings.filterwarnings("ignore")
 import pandas as pd
 
-experiment6 = re.run_experiment6()
-
 
 
 if __name__ == '__main__':
@@ -32,6 +30,7 @@ if __name__ == '__main__':
         experiment16 = executor.submit(re.run_experiment16)
         experiment17 = executor.submit(re.run_experiment17)
         experiment18 = executor.submit(re.run_experiment18)
+        experiment19 = executor.submit(re.run_experiment19)
 
     print("finished analysis")
 
@@ -54,6 +53,7 @@ if __name__ == '__main__':
         experiment16.result(),
         experiment17.result(),
         experiment18.result(),
+        experiment19.result()
     ]    
 
 
