@@ -278,6 +278,7 @@ class Plate():
         annotated_df = []
         df = df.copy()
         for name, df in df.groupby('variable'):
+
             df_end_exponential_index = df[df['growth_phase']
                                           == 'exponential_phase']
             if not df_end_exponential_index.empty:
@@ -295,6 +296,7 @@ class Plate():
             try:
                 df.loc[df_end_exponential_index:df_start_stationary,
                        'growth_phase'] = "post-exponential"
+                
                 annotated_df.append(df)
             except TypeError:
                 print(f"typerror {name}")
@@ -336,6 +338,19 @@ class Plate():
             ax.set_xlim(0, 80)
             plt.savefig(
                 f"{os.path.join(plot_path, name)}_growth_rate_{self.repeat_number}.png")
+            plt.close()
+
+
+        for name, df in self.data.groupby('Group'):
+            fig, ax = plt.subplots()
+            sns.scatterplot(data=df, x='OD', y='growth_rate',
+                            hue='growth_phase', ax=ax)
+            plot_path = os.path.join(
+                self.folder, "Experiment_plots", "growth_phase")
+            Path(plot_path).mkdir(parents=True, exist_ok=True)
+            ax.set_title(name)
+            plt.savefig(
+                f"{os.path.join(plot_path, name)}_growth_rate_vs_OD_{self.repeat_number}.png")
             plt.close()
 
 # now that I have the data I need I will align the dataframes then split them up

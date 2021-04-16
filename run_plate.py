@@ -125,8 +125,9 @@ def align_df(df, align_limit, **kwargs):
             
             #od_filter_value = (mean+(st_dev*5))
             od_filter_value = align_limit
+            time_filter = df['lag_time'].values[0]
 
-            filtered_new = df[df['OD'] > od_filter_value].reset_index(drop=True).copy()
+            filtered_new = df[df['Time'] > time_filter].reset_index(drop=True).copy()
             filtered_new["Time"] = new_time[0:len(filtered_new)]
             rebuilt_df.append(filtered_new)
         
