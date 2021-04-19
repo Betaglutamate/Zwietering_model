@@ -342,7 +342,6 @@ final_df_unique %>%
     ggtitle("06 GFP Expression vs Growth Rate")+
     ylab(expression(paste("PotsB-GFP ", "(", OD^-1, ")")))+
     xlab(expression(paste("Growth rate ", lambda, " (", hour^-1, ")")))+
-    xlim(0,2)+
     graph_theme+
     graph_color_scale+
     graph_fill_scale+

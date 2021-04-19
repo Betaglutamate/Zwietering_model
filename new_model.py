@@ -8,6 +8,8 @@ import seaborn as sns
 import plotnine as gg
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
+import json
+
 
 
 class Experiment:
@@ -131,6 +133,19 @@ class Plate():
         lt = []
 
         fit_df = []
+        variables_to_keep = []
+
+        save_path = self.folder
+        load_path = os.path.join(save_path, f'{self.name}.json')
+        
+        try:
+            with open(load_path) as f:
+                variables_to_keep = json.load(f)
+            stored_variables = True
+        except FileNotFoundError:
+            print("no saved values available, please select values")
+            stored_variables = False
+
 
         for name, df in self.data.groupby('variable'):
 
@@ -149,16 +164,14 @@ class Plate():
                 except RuntimeError:
                     popt = [0.01, 0.01, 0.01]
 
-                 # checck goodness of fit with rsquared here turn this intoa function
-                residuals = yData - self.zwietering_model(xData, *popt)
-                ss_res = np.sum(residuals**2)
-                ss_tot = np.sum((yData-np.mean(yData))**2)
-                r_squared = 1 - (ss_res / ss_tot)
-                if r_squared < 0.90:
-                    popt = [0.01, 0.01, 0.01]
+                if not stored_variables:
+                    keep_variable = self.manual_inspect_plots(popt, xData, yData, name)
+                    if keep_variable:
+                        variables_to_keep.append(keep_variable)
 
                 if self.plot:
                     self.plot_fitted_df(xData, yData, popt, name)
+
 
                 growth_rate = popt[1]
                 max_yield = popt[0]
@@ -169,9 +182,6 @@ class Plate():
                 lt.append(lag_time)
                 my.append(max_yield)
                 gr.append(growth_rate)
-                new_df = pd.DataFrame(
-                    {"name": names, "gr": gr, "my": my, "lt": lt})
-                self.new_df = new_df
 
                 df['lag_time'] = lag_time
                 df['max_yield'] = max_yield
@@ -179,7 +189,38 @@ class Plate():
                 df = df.drop('zwieter', axis=1)
                 fit_df.append(df)
 
+        
+        new_df = pd.DataFrame(
+                    {"name": names, "gr": gr, "my": my, "lt": lt})
+
+        self.new_df = new_df[new_df['name'].isin(variables_to_keep)]
         self.data = pd.concat(fit_df)
+        self.data = self.data[self.data['variable'].isin(variables_to_keep)]
+
+        with open(load_path, 'w', encoding='utf-8') as f:
+            json.dump(variables_to_keep, f, ensure_ascii=False, indent=4)
+
+        
+    def manual_inspect_plots(self, popt, xData, yData, name):
+    
+        x_fit = np.arange(0, 200, 0.1)
+            
+        fig, ax = plt.subplots()
+        plt.plot(x_fit, self.zwietering_model(x_fit, *popt),
+                'bo', markersize=1, label='fitted model')
+        plt.plot(xData, yData, 'ro', markersize=1, label='Data')
+        plt.xlim(0, 200)
+        plt.ylabel('ln(OD/OD0)')
+        plt.xlabel('Time')
+        plt.title(name)
+        plt.show()
+        user_input = input("Keep variable? Enter for yes n for no")
+        if not user_input:
+            print(f'{name} added to analysis')
+            plt.close()
+            return name
+        plt.close()
+        return False
 
     def plot_fitted_df(self, xData, yData, popt, name):
         x_fit = np.arange(0, 100, 0.1)

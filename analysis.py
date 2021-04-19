@@ -73,7 +73,7 @@ if __name__ == '__main__':
 # experiment2 = re.run_experiment2()
 # experiment3 = re.run_experiment3() 
 # experiment4 = re.run_experiment4()
-# experiment5 = re.run_experiment5()
+# experiment5 = re.run_experiment5() 
 # experiment6 = re.run_experiment6()
 # experiment7 = re.run_experiment7()
 # experiment8 = re.run_experiment8()
@@ -84,7 +84,7 @@ if __name__ == '__main__':
 # experiment13 = re.run_experiment13()
 # experiment14 = re.run_experiment14() #error
 # experiment15 = re.run_experiment15()
-# experiment15 = re.run_experiment15()
 # experiment16 = re.run_experiment16()
 # experiment17 = re.run_experiment17()
 # experiment18 = re.run_experiment18()
+# experiment19 = re.run_experiment19()
