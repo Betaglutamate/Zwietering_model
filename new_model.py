@@ -69,12 +69,18 @@ class Experiment:
 
     def combine_all_repeats(self):
         all_dfs = []
+        all_data = []
         for repeat in self.list_of_repeats:
             repeat_name = repeat.repeat_number
             repeat.final_df.loc[:, 'repeat'] = repeat_name
+            repeat.data.loc[:, 'repeat'] = repeat_name
+            repeat.data.loc[:, 'experiment'] = (f"{self.name}_{self.date}")
             all_dfs.append(repeat.final_df)
+            all_data.append(repeat.data)
 
+        self.full_data = pd.concat(all_data).reset_index(drop=True)
         self.experiment_df = pd.concat(all_dfs).reset_index(drop=True)
+
 
     def plot_experiment(self):
 
