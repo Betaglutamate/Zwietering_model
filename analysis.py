@@ -7,8 +7,11 @@ warnings.filterwarnings("ignore")
 import pandas as pd
 
 experiment1 = re.run_experiment1()
+experiment8 = re.run_experiment8()
+
 
 experiment1.full_data.to_csv('time_series/experiment1_df.csv')
+experiment1.full_data.to_csv('time_series/experiment8_df.csv')
 
 
 if __name__ == '__main__':

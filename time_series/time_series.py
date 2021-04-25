@@ -7,6 +7,8 @@ from sklearn.pipeline import make_pipeline
 from sktime.transformations.panel.rocket import Rocket
 
 main_df = pd.read_csv('experiment1_df.csv').drop(columns=['Unnamed: 0'])
+test_df = pd.read_csv('experiment8_df.csv').drop(columns=['Unnamed: 0'])
+
 
 #you want to create a list of wavelets for each variable
 
@@ -93,9 +95,6 @@ transformed = classifier.predict(X_test_transform)
 
 sns.scatterplot(x=xTime, y=xOD, hue=transformed)
 
-
-
-
 # Ok no you want to split wt and GFP
 
 xTest = X_list[0]
@@ -113,20 +112,35 @@ classifier.fit(X_train_transform, yTest)
 
 ##here you are seeing if it works against new data
 
-xTest = X_list[1]
-yTest = y_list[1]
-xTime = time_list[1]
+## different df test
 
-df_test_x = pd.DataFrame({"dim_0": xTest})
-df_test_y = pd.DataFrame({"dim_0": yTest})
+X_list = []
+y_list = []
+y_growth_list = []
+time_list = []
 
-X_test_transform = rocket.transform(df_test_x)
+for name, variable in test_df.groupby('variable'):
+    X, y, y_growth, time = create_subcurve(variable)
+    X_list.append(X)
+    y_list.append(y)
+    time_list.append(time)
+    y_growth_list.append(y_growth)
 
-classifier.score(X_test_transform, df_test_y)
 
-#make values for plotting
-xOD = np.fromiter((x.values[0] for x in xTest), float)
-transformed = classifier.predict(X_test_transform)
+    
+# xTest = X_list[1]
+# yTest = y_list[1]
+# xTime = time_list[1]
 
-sns.scatterplot(x=xTime, y=xOD, hue=transformed)
+# df_test_x = pd.DataFrame({"dim_0": xTest})
+# df_test_y = pd.DataFrame({"dim_0": yTest})
 
+# X_test_transform = rocket.transform(df_test_x)
+
+# classifier.score(X_test_transform, df_test_y)
+
+# #make values for plotting
+# xOD = np.fromiter((x.values[0] for x in xTest), float)
+# transformed = classifier.predict(X_test_transform)
+
+# sns.scatterplot(x=xTime, y=xOD, hue=transformed)
