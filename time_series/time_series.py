@@ -17,7 +17,7 @@ def create_subcurve(single_variable):
     y_growth_values = []
     for start_window in (range(len(single_variable.index)-length_window)):
         window = single_variable.iloc[start_window: start_window+length_window]
-        X = window['log(OD)']
+        X = window['OD']
         y = window['growth_phase'].values[0]
         y_growth = window['growth_rate']
         time = window['Time'].values[0]
@@ -144,5 +144,13 @@ def generate_fitted_plots(data, classifier, rocket):
         plt.suptitle(name)
 
         plt.tight_layout()
-        plt.savefig(f'plots/test_{name}.png', transparent = False, dpi=300)
+        plt.savefig(f'plots/od_{name}.png', transparent = False, dpi=300)
         plt.close()
+
+generate_fitted_plots(test_df, classifier, rocket)
+
+import pickle
+
+trained_model = [rocket, classifier]
+with open('rocket.pkl', 'wb') as output:
+    pickle.dump(trained_model, output, pickle.HIGHEST_PROTOCOL)
