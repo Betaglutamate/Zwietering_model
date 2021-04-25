@@ -102,73 +102,47 @@ def generate_classifier(train_df, test_df):
     X_test_transform = rocket.transform(df_test_fit_x)
 
     accuracy = classifier.score(X_test_transform, df_test_fit_y)
-    
-    return classifier
-    
 
     print(accuracy)
 
+    return classifier, rocket
 
-generate_classifier(main_df, test_df)
-
-
-#Here I will test the fit of my model
+classifier, rocket = generate_classifier(main_df, test_df)
 
 
-    #make values for plotting
-    # xOD = np.fromiter((x.values[0] for x in y_growth_test), float)
-    # transformed = classifier.predict(X_test_transform)
-
-    # sns.scatterplot(x=xTime, y=xOD, hue=transformed)
-
-    # Ok no you want to split wt and GFP
-
-    xTest = X_list[0]
-    yTest = y_list[0]
-
-    df_test_x = pd.DataFrame({"dim_0": xTest})
-    df_test_y = pd.DataFrame({"dim_0": yTest})
-
-    rocket = Rocket()  # by default, ROCKET uses 10,000 kernels
-    rocket.fit(df_test_x)
-    X_train_transform = rocket.transform(df_test_x)
-
-    classifier = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
-    classifier.fit(X_train_transform, yTest)
-
-    
-
-##here you are seeing if it works against new data
 
 ## different df test
+def generate_fitted_plots(data, classifier, rocket):
 
-X_list = []
-y_list = []
-y_growth_list = []
-time_list = []
-
-for name, variable in test_df.groupby('variable'):
-    X, y, y_growth, time = create_subcurve(variable)
-    X_list.append(X)
-    y_list.append(y)
-    time_list.append(time)
-    y_growth_list.append(y_growth)
-
-
+    for name, variable in test_df.groupby('variable'):
+        X, y, y_growth, time = create_subcurve(variable)
     
-# xTest = X_list[1]
-# yTest = y_list[1]
-# xTime = time_list[1]
+        xTest = X
+        yGrowth = y_growth
+        yTest = y
+        xTime = time
 
-# df_test_x = pd.DataFrame({"dim_0": xTest})
-# df_test_y = pd.DataFrame({"dim_0": yTest})
+        df_test_x = pd.DataFrame({"dim_0": xTest, "dim_1": yGrowth})
+        df_test_y = pd.DataFrame({"dim_0": yTest})
 
-# X_test_transform = rocket.transform(df_test_x)
+        X_test_transform = rocket.transform(df_test_x)
 
-# classifier.score(X_test_transform, df_test_y)
+        classifier.score(X_test_transform, df_test_y)
 
-# #make values for plotting
-# xOD = np.fromiter((x.values[0] for x in xTest), float)
-# transformed = classifier.predict(X_test_transform)
+        #make values for plotting
+        transformed = classifier.predict(X_test_transform)
+        xOD = np.fromiter((x.values[0] for x in xTest), float)
+        xGR = np.fromiter((x.values[0] for x in yGrowth), float)
 
-# sns.scatterplot(x=xTime, y=xOD, hue=transformed)
+
+        fig, [ax1, ax2] = plt.subplots(2)
+        sns.scatterplot(x=xTime, y=xOD, hue=transformed, ax=ax1, s=5)
+        sns.scatterplot(x=xTime, y=xGR, hue=transformed, ax=ax2, s=5)
+        ax2.set(title='Growth Rate')
+        ax1.set(title='ln(OD)')
+        ax2.get_legend().remove()
+        plt.suptitle(name)
+
+        plt.tight_layout()
+        plt.savefig(f'plots/test_{name}.png', transparent = False, dpi=300)
+        plt.close()
