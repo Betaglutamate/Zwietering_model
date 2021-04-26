@@ -55,15 +55,12 @@ if __name__ == '__main__':
     ]    
 
 
-    pickle.dump(experiment_summary, open( f"experiments_{str(datetime.date.today())}.p", "wb" ) )
     
+    all_data_dataframe = []
     all_experiments_dataframe = []
     for experiment in experiment_summary:
         experiment.experiment_df['experiment'] = '_'.join([experiment.name, experiment.solute, f'{experiment.temperature}C', experiment.date])
         all_experiments_dataframe.append(experiment.experiment_df)
-
-    all_data_dataframe = []
-    for experiment in experiment_summary:
         experiment.full_data['experiment'] = '_'.join([experiment.name, experiment.solute, f'{experiment.temperature}C', experiment.date])
         all_data_dataframe.append(experiment.full_data)
 

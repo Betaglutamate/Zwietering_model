@@ -12,7 +12,7 @@ def create_subcurve(single_variable, length_window):
     y_values = []
     time_values = []
     y_growth_values = []
-    for start_window in (range(len(single_variable.index)-length_window)):
+    for start_window in (range(0, len(single_variable.index)-length_window), 2):
         window = single_variable.iloc[start_window: start_window+length_window]
         X = window['OD']
         y = window['growth_phase'].values[0]
