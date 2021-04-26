@@ -114,7 +114,7 @@ classifier, rocket = generate_classifier(main_df, test_df)
 ## different df test
 def generate_fitted_plots(data, classifier, rocket):
 
-    for name, variable in test_df.groupby('variable'):
+    for name, variable in data.groupby('variable'):
         X, y, y_growth, time = create_subcurve(variable)
     
         xTest = X
