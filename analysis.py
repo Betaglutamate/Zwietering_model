@@ -6,14 +6,6 @@ import datetime
 warnings.filterwarnings("ignore")
 import pandas as pd
 
-experiment1 = re.run_experiment1()
-experiment8 = re.run_experiment8()
-
-
-experiment1.full_data.to_csv('time_series/experiment1_df.csv')
-experiment1.full_data.to_csv('time_series/experiment8_df.csv')
-
-
 if __name__ == '__main__':
 
 
@@ -70,8 +62,16 @@ if __name__ == '__main__':
         experiment.experiment_df['experiment'] = '_'.join([experiment.name, experiment.solute, f'{experiment.temperature}C', experiment.date])
         all_experiments_dataframe.append(experiment.experiment_df)
 
+    all_data_dataframe = []
+    for experiment in experiment_summary:
+        experiment.full_data['experiment'] = '_'.join([experiment.name, experiment.solute, f'{experiment.temperature}C', experiment.date])
+        all_data_dataframe.append(experiment.full_data)
+
     final_df = pd.concat(all_experiments_dataframe).reset_index(drop=True)
+    full_experiment_df = pd.concat(all_data_dataframe).reset_index(drop=True)
+
     final_df.to_csv('final_df.csv')
+    full_experiment_df.to_csv('all_data.csv')
 
 
     print("final df saved")
