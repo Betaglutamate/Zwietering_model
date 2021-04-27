@@ -1,4 +1,4 @@
-import new_model as model
+import time_series_model as model
 
 plot_graphs = False
 
