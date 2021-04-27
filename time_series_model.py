@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import plotnine as gg
-from scipy.optimize import curve_fit
 from scipy.stats import linregress
 import json
 import pickle
@@ -55,6 +54,7 @@ class Experiment:
             # temp_plate.calculate_growth_phase()
 
             if self.plot_bool:
+                sns.set_style("whitegrid")
                 temp_plate.visualize_growth_rate()
 
             temp_plate.align_data()
@@ -196,46 +196,36 @@ class Plate():
         self.params_df = params_df
 
     def visualize_growth_rate(self):
-        sns.set_style("whitegrid")
 
-        for name, df in self.data.groupby('Group'):
-            fig, ax = plt.subplots()
+        for name, df in self.growth_phase_df.groupby('Group'):
+            fig, [ax1, ax2] = plt.subplots(2)
             sns.scatterplot(data=df, x='Time', y='log(OD)',
-                            hue='growth_phase', ax=ax)
+                            hue='growth_phase', ax=ax1)
             plot_path = os.path.join(
                 self.folder, "Experiment_plots", "growth_phase")
             Path(plot_path).mkdir(parents=True, exist_ok=True)
-            ax.set_title(name)
-            ax.set_xlim(0, 80)
-            plt.savefig(
-                f"{os.path.join(plot_path, name)}_{self.repeat_number}.png")
-            plt.close()
-        
-        for name, df in self.data.groupby('Group'):
-            fig, ax = plt.subplots()
+            ax1.set_title(name)
+            ax1.set_xlim(0, 80)
             sns.scatterplot(data=df, x='Time', y='growth_rate',
-                            hue='growth_phase', ax=ax)
-            plot_path = os.path.join(
-                self.folder, "Experiment_plots", "growth_phase")
-            Path(plot_path).mkdir(parents=True, exist_ok=True)
-            ax.set_title(name)
-            ax.set_xlim(0, 80)
+                            hue='growth_phase', ax=ax2)
+            ax2.set_xlim(0, 80)
+            plt.tight_layout()
             plt.savefig(
                 f"{os.path.join(plot_path, name)}_growth_rate_{self.repeat_number}.png")
             plt.close()
 
 
-        for name, df in self.data.groupby('Group'):
-            fig, ax = plt.subplots()
-            sns.scatterplot(data=df, x='OD', y='growth_rate',
-                            hue='growth_phase', ax=ax)
-            plot_path = os.path.join(
-                self.folder, "Experiment_plots", "growth_phase")
-            Path(plot_path).mkdir(parents=True, exist_ok=True)
-            ax.set_title(name)
-            plt.savefig(
-                f"{os.path.join(plot_path, name)}_growth_rate_vs_OD_{self.repeat_number}.png")
-            plt.close()
+        # for name, df in self.data.groupby('Group'):
+        #     fig, ax = plt.subplots()
+        #     sns.scatterplot(data=df, x='OD', y='growth_rate',
+        #                     hue='growth_phase', ax=ax)
+        #     plot_path = os.path.join(
+        #         self.folder, "Experiment_plots", "growth_phase")
+        #     Path(plot_path).mkdir(parents=True, exist_ok=True)
+        #     ax.set_title(name)
+        #     plt.savefig(
+        #         f"{os.path.join(plot_path, name)}_growth_rate_vs_OD_{self.repeat_number}.png")
+        #     plt.close()
 
 # now that I have the data I need I will align the dataframes then split them up
     def split_data_frames(self, df):
@@ -316,9 +306,13 @@ class Plate():
 
             df_test_x = pd.DataFrame({"dim_0": xTest, "dim_1": yGrowth})
 
-            X_test_transform = rocket.transform(df_test_x)
-            #make values for plotting
-            transformed = classifier.predict(X_test_transform)
+            try:
+                X_test_transform = rocket.transform(df_test_x)
+                #make values for plotting
+                transformed = classifier.predict(X_test_transform)
+            except:
+                transformed = "error"
+
             xOD = np.fromiter((x.values[0] for x in xTest), float)
             xGR = np.fromiter((x.values[0] for x in yGrowth), float)
 
@@ -327,17 +321,20 @@ class Plate():
             predicted_df.append(rebuilt_df)
 
             if plot_bool:
-                fig, [ax1, ax2] = plt.subplots(2)
-                sns.scatterplot(x=xTime, y=np.log(xOD), hue=transformed, ax=ax1, s=5)
-                sns.scatterplot(x=xTime, y=xGR, hue=transformed, ax=ax2, s=5)
-                ax2.set(title='Growth Rate')
-                ax1.set(title='ln(OD)')
-                ax2.get_legend().remove()
-                plt.suptitle(name)
+                try:
+                    fig, [ax1, ax2] = plt.subplots(2)
+                    sns.scatterplot(x=xTime, y=np.log(xOD), hue=transformed, ax=ax1, s=5)
+                    sns.scatterplot(x=xTime, y=xGR, hue=transformed, ax=ax2, s=5)
+                    ax2.set(title='Growth Rate')
+                    ax1.set(title='ln(OD)')
+                    ax2.get_legend().remove()
+                    plt.suptitle(name)
 
-                plt.tight_layout()
-                plt.savefig(f'{os.path.join(save_path, name)}.png', transparent = False, dpi=300)
-                plt.close()
+                    plt.tight_layout()
+                    plt.savefig(f'{os.path.join(save_path, name)}.png', transparent = False, dpi=300)
+                    plt.close()
+                except ValueError:
+                    print(f"could not create plot {name}")
         
         full_df = pd.concat(predicted_df)
         

@@ -6,7 +6,15 @@ import datetime
 warnings.filterwarnings("ignore")
 import pandas as pd
 
-experiment1 = re.run_experiment1()
+experiment3 = re.run_experiment3() 
+experiment4 = re.run_experiment4()
+experiment5 = re.run_experiment5() 
+experiment6 = re.run_experiment6()
+experiment7 = re.run_experiment7()
+experiment8 = re.run_experiment8()
+experiment9 = re.run_experiment9()
+experiment10 = re.run_experiment10()
+
 
 
 if __name__ == '__main__':
