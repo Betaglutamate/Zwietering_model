@@ -12,7 +12,7 @@ def create_subcurve(single_variable, length_window):
     y_values = []
     time_values = []
     y_growth_values = []
-    for start_window in (range(0, len(single_variable.index)-length_window), 2):
+    for start_window in (range(len(single_variable.index)-length_window)):
         window = single_variable.iloc[start_window: start_window+length_window]
         X = window['OD']
         y = window['growth_phase'].values[0]
@@ -26,13 +26,13 @@ def create_subcurve(single_variable, length_window):
     return X_values, y_values, y_growth_values, time_values
 
 
-def test_classifier(test_df, window_length):
+def test_classifier(test_df, window_length, window_point_interval):
     X_list = []
     y_list = []
     y_growth_list = []
     time_list = []
 
-    for name, variable in test_df.groupby('variable'):
+    for name, variable in test_df.groupby(['experiment', 'variable']):
         X, y, y_growth, time = create_subcurve(variable, window_length)
         X_list.append(X)
         y_list.append(y)
@@ -48,9 +48,9 @@ def test_classifier(test_df, window_length):
     growthData = np.array(pd.Series(flat_growth))
     yData = np.array(flat_y)
 
-    xData_small = xData[1::3]
-    yData_small = yData[1::3]
-    growthData_small = growthData[1::3]
+    xData_small = xData[1::window_point_interval]
+    yData_small = yData[1::window_point_interval]
+    growthData_small = growthData[1::window_point_interval]
 
     df_test_fit_x = pd.DataFrame(
         {"dim_0": xData_small, "dim_1": growthData_small})
@@ -59,7 +59,7 @@ def test_classifier(test_df, window_length):
     return df_test_fit_x, df_test_fit_y
 
 
-def generate_classifier(train_df, test_df, window_length=20):
+def generate_classifier(train_df, test_df, window_length=20, window_point_interval = 5):
 
     # you want to create a list of wavelets for each variable
     X_list = []
@@ -67,7 +67,7 @@ def generate_classifier(train_df, test_df, window_length=20):
     y_growth_list = []
     time_list = []
 
-    for name, variable in train_df.groupby('variable'):
+    for name, variable in train_df.groupby(['experiment', 'variable']):
         X, y, y_growth, time = create_subcurve(variable, window_length)
         X_list.append(X)
         y_list.append(y)
@@ -83,9 +83,9 @@ def generate_classifier(train_df, test_df, window_length=20):
     growthData = np.array(pd.Series(flat_growth))
     yData = np.array(flat_y)
 
-    xData_small = xData[1::3]
-    yData_small = yData[1::3]
-    growthData_small = growthData[1::3]
+    xData_small = xData[1::window_point_interval]
+    yData_small = yData[1::window_point_interval]
+    growthData_small = growthData[1::window_point_interval]
 
     df_train_x = pd.DataFrame(
         {"dim_0": xData_small, "dim_1": growthData_small})
@@ -99,7 +99,7 @@ def generate_classifier(train_df, test_df, window_length=20):
     classifier.fit(X_train_transform, yData_small)
 
     # Compare to another sample data here
-    df_test_fit_x, df_test_fit_y = test_classifier(test_df, window_length)
+    df_test_fit_x, df_test_fit_y = test_classifier(test_df, window_length, window_point_interval)
 
     X_test_transform = rocket.transform(df_test_fit_x)
 
@@ -126,7 +126,7 @@ def generate_fitted_plots(data, classifier, rocket, window_length):
 
         X_test_transform = rocket.transform(df_test_x)
 
-        classifier.score(X_test_transform, df_test_y)
+        print(classifier.score(X_test_transform, df_test_y))
 
         #make values for plotting
         transformed = classifier.predict(X_test_transform)

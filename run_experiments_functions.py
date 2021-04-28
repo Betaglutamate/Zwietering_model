@@ -1,6 +1,6 @@
-import time_series_model as model
+import new_model as model
 
-plot_graphs = True
+plot_graphs = False
 
 def run_experiment1():
     experiment1 = model.Experiment(media='M63_Gly',
@@ -177,3 +177,13 @@ def run_experiment19():
                                 plot=plot_graphs,
                                 label = '100-600')
     return run_experiment19
+
+def run_experiment20():
+    run_experiment20 = model.Experiment(media='M63_Man',
+                                solute='NaCl',
+                                temperature='37',
+                                date='2021-04-07',
+                                folder='Data/20210407_m63Man_37_NaCl',
+                                plot=True,
+                                label = '100-600')
+    return run_experiment20
