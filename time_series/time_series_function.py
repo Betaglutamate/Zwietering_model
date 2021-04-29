@@ -1,3 +1,4 @@
+from numba.cuda.simulator import kernel
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sktime.transformations.panel.rocket import Rocket
@@ -6,6 +7,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from sklearn.linear_model import Perceptron
+
+main_df = pd.read_csv('all_data.csv')
+length_window = 30
+
+main_df_list = [df for _, df in main_df.groupby('experiment')]
+
+main_df_try = main_df_list[0]
 
 def create_subcurve(single_variable, length_window):
     X_values = []
@@ -67,7 +76,7 @@ def generate_classifier(train_df, test_df, window_length=20, window_point_interv
     y_growth_list = []
     time_list = []
 
-    for name, variable in train_df.groupby(['experiment', 'variable']):
+    for name, variable in main_df_try.groupby(['experiment', 'variable']):
         X, y, y_growth, time = create_subcurve(variable, window_length)
         X_list.append(X)
         y_list.append(y)
@@ -90,13 +99,17 @@ def generate_classifier(train_df, test_df, window_length=20, window_point_interv
     df_train_x = pd.DataFrame(
         {"dim_0": xData_small, "dim_1": growthData_small})
 
-    rocket = Rocket()  # by default, ROCKET uses 10,000 kernels
+    rocket = Rocket(num_kernels=10000)  # by default, ROCKET uses 10,000 kernels
     rocket.fit(df_train_x)
     X_train_transform = rocket.transform(df_train_x)
 
-    classifier = RidgeClassifierCV(
-        alphas=np.logspace(-3, 3, 10), normalize=True)
+    # classifier = RidgeClassifierCV(
+    #     alphas=np.logspace(-3, 3, 10), normalize=True)
+
+    classifier = Perceptron()
     classifier.fit(X_train_transform, yData_small)
+
+    classifier.partial_fit(X_train_transform, yData_small)
 
     # Compare to another sample data here
     df_test_fit_x, df_test_fit_y = test_classifier(test_df, window_length, window_point_interval)
