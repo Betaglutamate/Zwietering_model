@@ -95,7 +95,7 @@ for df in variable_df_list[1:20]:
 # test perceptron
 
 
-initial_df = variable_df_list[200]
+initial_df = variable_df_list[700]
 
 x_od = []
 y_current_growth_phase = []
