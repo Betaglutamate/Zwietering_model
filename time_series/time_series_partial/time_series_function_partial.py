@@ -10,7 +10,6 @@ import pickle
 from pathlib import Path
 
 
-from sklearn.linear_model import Perceptron
 from pathlib import Path
 import os
 
@@ -116,32 +115,35 @@ def initialize_train_model(variable_df_list, window_length, rocket, classifier):
 
 
 # ## different df test
+
+
 def create_fitted_plots(experiment_df, experiment_name, classifier, rocket, window_length):
 
     plot_path = os.path.join('plots', experiment_name)
     Path(plot_path).mkdir(parents=True, exist_ok=True)
+    
+    for name, variable in experiment_df.groupby(['experiment', 'variable']):
+        try:
+            x_od, y_growth_phase, x_growth, time, _ = create_subcurve(variable, window_length)
 
-    for name, variable in experiment_df.groupby('variable'):
-        x_od, y_growth_phase, x_growth, time, _ = create_subcurve(variable, window_length)
+            df_test_x, growth_phase, time_list = create_data(variable, window_length)
+            X_test_transform = rocket.transform(df_test_x)
 
-        df_test_x, growth_phase, time_list = create_data(variable, window_length)
-        X_test_transform = rocket.transform(df_test_x)
+            transformed = classifier.predict(X_test_transform)
+            xOD = np.fromiter((x.values[0] for x in x_od), float)
+            xGR = np.fromiter((x.values[0] for x in x_growth), float)
 
-        transformed = classifier.predict(X_test_transform)
-        xOD = np.fromiter((x.values[0] for x in x_od), float)
-        xGR = np.fromiter((x.values[0] for x in x_growth), float)
+            print(f'made prediction {name}')
+            fig, [ax1, ax2] = plt.subplots(2)
+            sns.scatterplot(x=time, y=xOD, hue=transformed, ax=ax1, s=5)
+            sns.scatterplot(x=time, y=xGR, hue=transformed, ax=ax2, s=5)
+            ax2.set(title='Growth Rate')
+            ax1.set(title='ln(OD)')
+            ax2.get_legend().remove()
+            plt.suptitle(name[1])
 
-        print(f'made prediction {name}')
-
-
-        fig, [ax1, ax2] = plt.subplots(2)
-        sns.scatterplot(x=time, y=xOD, hue=transformed, ax=ax1, s=5)
-        sns.scatterplot(x=time, y=xGR, hue=transformed, ax=ax2, s=5)
-        ax2.set(title='Growth Rate')
-        ax1.set(title='ln(OD)')
-        ax2.get_legend().remove()
-        plt.suptitle(name)
-
-        plt.tight_layout()
-        plt.savefig(f'{os.path.join(plot_path, name)}.png', transparent = False, dpi=300)
-        plt.close()
+            plt.tight_layout()
+            plt.savefig(f'{os.path.join(plot_path, name[1])}.png', transparent = False, dpi=300)
+            plt.close()
+        except:
+            print(f"couldnt plot {name}")
