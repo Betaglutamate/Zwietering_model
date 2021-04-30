@@ -1,23 +1,14 @@
-from numba.cuda.simulator import kernel
-from sklearn.pipeline import make_pipeline
 from sktime.transformations.panel.rocket import Rocket
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.linear_model import Perceptron
 import pickle
-
-
 import time_series_function_partial as tsf
 
 
 main_df = pd.read_csv('all_data.csv')
 length_window = 30
+plot_fit = False
 
-main_df_list = [df for _, df in main_df.groupby('experiment')]
-
-testing_df = main_df_list[0]
 
 #load rocket and classifier
 try:
@@ -44,10 +35,9 @@ with open('20210430_perceptron_trained.pickle', 'wb') as handle:
 print('trained model saved')
 
 #initialize rocket once only
-testing_df = main_df_list[0]
 
-
-for name, df in testing_df.groupby('experiment'):
-    tsf.create_fitted_plots(testing_df, name, classifier, rocket, length_window)
+if plot_fit:
+    for name, df in main_df.groupby('experiment'):
+        tsf.create_fitted_plots(main_df, name, classifier, rocket, length_window)
 
 
