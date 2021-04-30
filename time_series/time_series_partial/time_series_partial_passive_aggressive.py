@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier
 import pickle
 
 import time_series_function_partial as tsf
@@ -27,7 +27,7 @@ try:
 except FileNotFoundError:
     print('no existing model found initializing fresh instance of rocket and classifier')
     rocket = Rocket()
-    classifier = SGDClassifier(penalty="elasticnet")
+    classifier = PassiveAggressiveClassifier()
 # main_df_try = main_df_list[0]
 
 rocket, classifer = tsf.train_model(main_df, rocket, 30, classifier)

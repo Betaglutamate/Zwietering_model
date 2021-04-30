@@ -8,6 +8,7 @@ import seaborn as sns
 from sklearn.linear_model import Perceptron
 import pickle
 
+
 import time_series_function_partial as tsf
 
 
@@ -45,8 +46,8 @@ print('trained model saved')
 #initialize rocket once only
 testing_df = main_df_list[0]
 
-tsf.generate_fitted_plots(testing_df, classifier, rocket, length_window)
 
-
+for name, df in testing_df.groupby('experiment'):
+    tsf.create_fitted_plots(testing_df, name, classifier, rocket, length_window)
 
 
