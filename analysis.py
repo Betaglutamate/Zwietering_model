@@ -69,9 +69,11 @@ if __name__ == '__main__':
 
     final_df = pd.concat(all_experiments_dataframe).reset_index(drop=True)
     full_experiment_df = pd.concat(all_data_dataframe).reset_index(drop=True)
+    
+    full_NaCl = full_experiment_df[full_experiment_df['experiment'].str.contains("NaCl")]
 
     final_df.to_csv('final_df.csv')
-    full_experiment_df.to_csv('all_data.csv')
+    full_NaCl.to_csv('NaCl_data.csv')
 
 
     print("final df saved")
