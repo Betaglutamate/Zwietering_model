@@ -6,7 +6,7 @@ import time_series_function_partial as tsf
 
 
 main_df = pd.read_csv('all_data.csv')
-length_window = 30
+length_window = 10
 plot_fit = False
 
 
@@ -36,8 +36,7 @@ print('trained model saved')
 
 #initialize rocket once only
 
-if plot_fit:
-    for name, df in main_df.groupby('experiment'):
-        tsf.create_fitted_plots(main_df, name, classifier, rocket, length_window)
+for name, df in main_df.groupby('experiment'):
+    tsf.create_fitted_plots(main_df, name, classifier, rocket, length_window)
 
 

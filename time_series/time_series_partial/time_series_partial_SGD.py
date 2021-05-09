@@ -34,7 +34,7 @@ print('trained model saved')
 
 #initialize rocket once only
 
-e_lost = [df for _, df in main_df.groupby('experiment')]
+# e_lost = [df for _, df in main_df.groupby('experiment')]
 
 for name, df in main_df.groupby('experiment'):
     tsf.create_fitted_plots(main_df, name, classifier, rocket, length_window)
