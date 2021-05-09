@@ -5,9 +5,9 @@ import pickle
 import time_series_function_partial as tsf
 
 
-main_df = pd.read_csv('all_data.csv')
-length_window = 10
-plot_fit = False
+main_df = pd.read_csv('NaCl_data.csv')
+length_window = 30
+plot_fit = True
 
 
 #load rocket and classifier
@@ -36,7 +36,8 @@ print('trained model saved')
 
 #initialize rocket once only
 
-for name, df in main_df.groupby('experiment'):
-    tsf.create_fitted_plots(main_df, name, classifier, rocket, length_window)
+if plot_fit:
+    for name, df in main_df.groupby('experiment'):
+        tsf.create_fitted_plots(df, classifier, rocket, length_window)
 
 

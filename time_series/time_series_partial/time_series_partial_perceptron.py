@@ -38,6 +38,6 @@ print('trained model saved')
 
 if plot_fit:
     for name, df in main_df.groupby('experiment'):
-        tsf.create_fitted_plots(main_df, name, classifier, rocket, length_window)
+        tsf.create_fitted_plots(df, name, classifier, rocket, length_window)
 
 

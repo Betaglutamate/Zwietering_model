@@ -117,12 +117,11 @@ def initialize_train_model(variable_df_list, window_length, rocket, classifier):
 # ## different df test
 
 
-def create_fitted_plots(experiment_df, experiment_name, classifier, rocket, window_length):
-
-    plot_path = os.path.join('plots', experiment_name)
-    Path(plot_path).mkdir(parents=True, exist_ok=True)
+def create_fitted_plots(experiment_df, classifier, rocket, window_length):
     
     for name, variable in experiment_df.groupby(['experiment', 'variable']):
+        plot_path = os.path.join('plots', name[0])
+        Path(plot_path).mkdir(parents=True, exist_ok=True)
         try:
             x_od, y_growth_phase, x_growth, time, _ = create_subcurve(variable, window_length)
 
